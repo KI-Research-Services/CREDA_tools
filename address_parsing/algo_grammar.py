@@ -7,7 +7,6 @@ Created on Thu Jul  2 22:26:36 2020
 
 import re
 
-
 class Addr_Parser:
     def __init__(self, address, testing=False):
         self.addresses = []
