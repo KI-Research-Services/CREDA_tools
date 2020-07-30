@@ -1,3 +1,7 @@
+<<<<<<< HEAD
 # Byte-compiled / optimized / DLL files
 __pycache__/
 *.py[cod]
+=======
+**/__pycache__
+>>>>>>> 732fb7f1e742acc4b10fa35c857146da275e4bc7
