@@ -9,7 +9,24 @@ import re
 
 class AddrParser:
 
-    def __init__(self, address, testing=False):
+    def __init__(self, address: str, testing: bool = False):
+        '''
+        Basic initialization function for the AddrParser object
+
+        Parameters
+        ----------
+        address : str
+            A single, string formatted address to be parsed
+        testing : bool, optional
+            A simple flag for whether the function is being run in test mode. If
+            set to true, several print statements give output at each step. The
+            default is False.
+
+        Returns
+        -------
+        None.
+
+        '''
         self.addresses = []
         self.flags = []
         address.strip()
@@ -145,7 +162,24 @@ class AddrParser:
                    }
 
     @staticmethod
-    def initial_checks(pieces):
+    def initial_checks(pieces: list) -> list:
+        '''
+        This function performs initial checks on suitability of the address. Basic
+        tests include presence of an alphanumeric, presence of range delimiter,
+        and presence of a slash character.
+
+        Parameters
+        ----------
+        pieces : list
+            The token list making up the current address to be processed.
+
+        Returns
+        -------
+        pieces : list
+            The token list making up the current address to be processed, now with
+            information and error flags in case an initial check was activated.
+
+        '''
         has_num = False
         possible_range = False
         has_num_slash = False
@@ -168,7 +202,24 @@ class AddrParser:
         return pieces
 
     @staticmethod
-    def remove_consecutive_delims(pieces):
+    def remove_consecutive_delims(pieces: list) ->list:
+        '''
+        This function removes problematic tokens that arise from inconsistent or
+        extra spacing. This could be due to consecutive space characters, spaces
+        around a range delimiter, etc.
+
+        Parameters
+        ----------
+        pieces : list
+            The token list making up the current address to be processed.
+
+        Returns
+        -------
+        list
+            The token list making up the current address to be processed, now
+            modified to remove issues arising from extra spaces.
+
+        '''
         temp_pieces = []
         while len(pieces) > 1:
             if pieces[0].typ in ['del', 'rdel']:
@@ -191,7 +242,22 @@ class AddrParser:
         return temp_pieces
 
     @staticmethod
-    def num_size(pieces):
+    def num_size(pieces: list) -> list:
+        '''
+        A quick check for with numeric tokens contain numbers beyond length 5,
+        as this is often indicative of an error in the address.
+
+        Parameters
+        ----------
+        pieces : list
+            The token list making up the current address to be processed.
+
+        Returns
+        -------
+        list
+            The token list now processed for potentially long numerics.
+
+        '''
         for piece in pieces:
             if piece.typ == 'num':
                 if len(piece.strng) > 5:
@@ -199,7 +265,7 @@ class AddrParser:
         return pieces
 
     @staticmethod
-    def check_alnums(pieces):
+    def check_alnums(pieces: list) -> list:
         '''takes alnums (combination of numbers and alphabetical) and converts
         them into either numerical (e.g. 12a or 14b, an apt address), a char
         (5th, 1st, etc.), or two pieces, one of each (12ne to 12 ne) '''
@@ -230,7 +296,24 @@ class AddrParser:
         return pieces
 
     @staticmethod
-    def combine_pound(pieces):
+    def combine_pound(pieces: list) -> list:
+        '''
+        This provides look-ahead for pound symbols. If the current token list
+        reflects an address with a pound symbol, e.g. "13 wilbur st, # 16", this
+        code combines the last characters to "#16"
+
+        Parameters
+        ----------
+        pieces : list
+            The token list making up the current address to be processed.
+
+        Returns
+        -------
+        list
+            The token list making up the current address to be processed, now
+            modified to correctly handle pound symbols.
+
+        '''
         temp_pieces = []
         error_pieces = []
         while len(pieces) > 1:
@@ -259,7 +342,24 @@ class AddrParser:
         return temp_pieces
 
     @staticmethod
-    def combine_chars(pieces):
+    def combine_chars(pieces: list) -> list:
+        '''
+        This function combines consecutive character strings. For instance, the
+        tokenizing process turns "George Washington Blvd." into three separate
+        character tokens. This would convert back to a single token.
+
+        Parameters
+        ----------
+        pieces : list
+            The token list making up the current address to be processed.
+
+        Returns
+        -------
+        list
+            The token list making up the current address to be processed, now
+            removing adjacent character tokens.
+
+        '''
         temp_pieces = []
         while len(pieces) > 2:
             if pieces[0].typ == 'char':
@@ -292,7 +392,23 @@ class AddrParser:
         return temp_pieces
 
     @staticmethod
-    def combine_multnums(pieces):
+    def combine_multnums(pieces: list) -> list:
+        '''
+        This function provides for correct handling of multiple adjacent number
+        and ranges, allowing correct parsing of string such as 1 3 5 wilbur lane
+
+        Parameters
+        ----------
+        pieces : list
+            The token list making up the current address to be processed.
+
+        Returns
+        -------
+        list
+            The token list making up the current address to be processed, now
+            with properly combined numerics.
+
+        '''
         temp_pieces = []
         while len(pieces) > 1:
             if pieces[0].typ in ['num', 'multnum', 'range']:
@@ -328,7 +444,23 @@ class AddrParser:
         return temp_pieces
 
     @staticmethod
-    def combine_range(pieces):
+    def combine_range(pieces: list) -> list:
+        '''
+        This function handles correct processing of ranges, including those with
+        incomplete second numbers (e.g. 5430-35)
+
+        Parameters
+        ----------
+        pieces : list
+            The token list making up the current address to be processed.
+
+        Returns
+        -------
+        list
+            The token list making up the current address to be processed, now
+            with correct handling of abbreviated addresses.
+
+        '''
         temp_pieces = []
         while len(pieces) > 2:
             if pieces[1].typ == 'rdel':
@@ -359,7 +491,22 @@ class AddrParser:
         return temp_pieces
 
     @staticmethod
-    def combine_addrs(pieces):
+    def combine_addrs(pieces: list) -> list:
+        '''
+        This is a late-step function which starts joining valid address combinations.
+
+        Parameters
+        ----------
+        pieces : list
+            The token list making up the current address to be processed.
+
+        Returns
+        -------
+        list
+            The token list making up the current address to be processed, now
+            hopefully with only address tokens and informational tokens.
+
+        '''
         error = False
         temp_pieces = []
         while len(pieces) > 1:
@@ -385,7 +532,24 @@ class AddrParser:
         return temp_pieces
 
     @staticmethod
-    def combine_addr_pchars(pieces):
+    def combine_addr_pchars(pieces:list) -> list:
+        '''
+        Appends pchars (pound symbols, apartment numbers, etc) onto the end of the
+        address.
+
+        Parameters
+        ----------
+        pieces : list
+            The token list, now of mainly addresses and informational tokens, that
+            may also contain pchars - a post character like those for apartments.
+
+        Returns
+        -------
+        list
+            A list of completed address tokens, possibly with added pchars and
+            informational tokens.
+
+        '''
         temp_pieces = []
         while len(pieces) > 2:
             if pieces[0].typ == 'address':
@@ -417,7 +581,25 @@ class AddrParser:
             temp_pieces.append(piece)
         return temp_pieces
 
-    def remove_addrs(self, pieces):
+    def remove_addrs(self, pieces: list) -> list:
+        '''
+        A finishing step that removes completed address tokens and adds them to
+        the parser address list.
+
+        Parameters
+        ----------
+        pieces : list
+            The token list that has completed parsing and going through the grammar
+            to make address tokens, with accompanying informational or error tokens.
+
+        Returns
+        -------
+        temp_pieces : list
+            A list of tokens, if any are left for this address, once all address
+            tokens have been removed. These last will almost certainly be info or
+            error tokens.
+
+        '''
         temp_pieces = []
         for piece in pieces:
             if piece.typ == 'address':
@@ -426,7 +608,23 @@ class AddrParser:
                 temp_pieces.append(piece)
         return temp_pieces
 
-    def remove_flags(self, pieces):
+    def remove_flags(self, pieces: list) -> list:
+        '''
+        This function removes informational and error tags discovered through the
+        parsing process, and saves them to the parser object for this address.
+
+        Parameters
+        ----------
+        pieces : list
+            Parsed tokens after address tokens have been removed.
+
+        Returns
+        -------
+        list
+            Parsed tokens after valid addresses, error and info tokens have been
+            removed. Left over tokens are treated as errors at this point.
+
+        '''
         temp_pieces = []
         for piece in pieces:
             if piece.typ == 'flag':
@@ -436,9 +634,13 @@ class AddrParser:
         return temp_pieces
 
     def get_addrs(self):
+        ''' Basic getter function for the fully parsed addresses '''
         return [x.strng for x in self.addresses]
 
     def get_flags(self):
+        ''' Basic getter function for the error and informational flags flipped
+        during the parsing process
+        '''
         temp_flags = []
         for flag in self.flags:
             temp_flags.append(f'{flag.strng} : {self.Error_Codes[flag.strng]}')
