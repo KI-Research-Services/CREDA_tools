@@ -34,7 +34,7 @@ def split_df_addresses(addr_df: pd.DataFrame):
     return_list = []
 
     for row in addr_df.iterrows():
-        addresses = row.parsed_Addr
+        addresses = row.parsed_addr
         for address in addresses:
             if re.match('\\d+-\\d+.+', address) is not None:
                 print(address)
