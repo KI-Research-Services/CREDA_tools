@@ -13,10 +13,10 @@ from CREDA_tools.geocoding import validators
 
 class LightBoxValidator(validators.AddressValidator):
     '''This class runs data through the LightBox Validator/Geocoder'''
-    def __init__(self, address_df, geocode_file = "Lightbox.csv"):
+    def __init__(self, address_df, geocode_file):
         super().__init__(address_df)
         self.temp_file = "temp_files\\LightBox_temp.csv"
-        self.geocode_file = f'geocoded_in\\{geocode_file}'
+        self.geocode_file = geocode_file
         self.process_addresses()
         
     def process_addresses(self):
@@ -26,7 +26,7 @@ class LightBoxValidator(validators.AddressValidator):
             combined = pd.merge(self.address_df, old_run, how ='left', on=['TempIDZ'])
 
         self.address_df = combined[['TempIDZ','longitude','latitude']]
-        self.address_df.rename(columns = {'longitude':'LightBox_long','latitude':'LightBox_lat'}, inplace=True)
+        self.address_df.rename(columns = {'longitude':'Lightbox_long','latitude':'Lightbox_lat'}, inplace=True)
         
     def run_validator_matches(self, to_process):
         '''Returns validated, Geocoded addresses for self.address_df, using the LightBox tool'''

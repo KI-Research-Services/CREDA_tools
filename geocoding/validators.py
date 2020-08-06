@@ -5,6 +5,8 @@ Created on Mon Mar  9 13:13:49 2020
 @author: fisherd
 """
 
+import pandas as pd
+
 class AddressValidator(object):
     '''This is the parent object that all Validators inherit from'''
     def __init__(self, address_df):
@@ -22,6 +24,7 @@ class ValidatorFactory():
 
     def create_validator(self, validator_type, address_df, geocode_file=None):
         '''Instantiates and returns the requested validator, based on input'''
+        print(f"In validators.py, geocoding file is {geocode_file}")
         if validator_type == 'Census':
             import CREDA_tools.geocoding.census as census
             return census.CensusValidator(address_df, geocode_file) 
