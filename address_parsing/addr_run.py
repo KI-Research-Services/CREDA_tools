@@ -14,7 +14,9 @@ from CREDA_tools.address_parsing import addr_splitter
 def parse_addr_file(address_file: str, expand_addresses: bool = True, outfile = "parsed_addrs.csv") -> pd.DataFrame:
     '''
     This takes a single filename, with a specific format for required columns,
-    and returns a dataframe of parsed addresses.
+    and returns a dataframe of parsed addresses. Most of the work is done by the
+    parse_addr_df function, but this function cleans up input and creates extra
+    columns needed.
 
     Parameters
     ----------
@@ -34,7 +36,15 @@ def parse_addr_file(address_file: str, expand_addresses: bool = True, outfile = 
 
     '''
     address_lines = pd.read_csv(address_file)
-    address_lines['addr'] = address_lines['addr'].str.lower()
+    address_lines.reset_index(inplace=True)
+    address_lines.rename(columns={'index':'TempID'}, inplace=True)
+    address_lines['TempID'] = address_lines['TempID'] + 1
+    try:
+        address_lines['addr'] = address_lines['addr'].str.lower()
+    except KeyError:
+        print("\n***ERROR***\n-Invalid input format. Infile must have address columns 'addr'.")
+        print(address_lines.columns)
+        return None
     address_lines['parsed_addr'] = address_lines['addr']
     address_lines['flags'] = ""
     
@@ -44,7 +54,11 @@ def parse_addr_file(address_file: str, expand_addresses: bool = True, outfile = 
     
 def parse_addr_df(address_lines: pd.DataFrame, expand_addresses: bool = True, outfile = "parsed_addrs.csv") -> pd.DataFrame:
     '''
-    
+    This takes a single filename, with a specific format for required columns,
+    and returns a dataframe of parsed addresses. The input addresses should be
+    in all lower case by this point, and there should be 3 specific columns in
+    the dataframe - addr, parsed_addr (currently empty), and flags (currently
+    empty)
 
     Parameters
     ----------
@@ -60,3 +74,22 @@ def parse_addr_df(address_lines: pd.DataFrame, expand_addresses: bool = True, ou
     None.
 
     '''
+        
+    for idx, row in address_lines.copy().iterrows():
+        temp = algo_grammar.AddrParser(row['addr'])
+        row['parsed_addr'] = temp.get_addrs()
+        row['flags'] = temp.get_flags()
+        address_lines.iloc[idx] = row
+
+    if expand_addresses:
+        temp = addr_splitter.split_df_addresses(address_lines[['TempID', 'parsed_addr']])
+        address_lines = pd.merge(address_lines, temp, how='inner', on='TempID')
+    else:
+        address_lines.TempIDZ = address_lines.TempID
+        
+    outfile = f'addresses_out\\{outfile}'
+    address_lines[['TempID', 'TempIDZ','addr','single_address','city','state','zip']].to_csv(outfile, index=False)
+    print(f'\nAddress parsing now completed and saved to addresses_out\\{outfile}')
+    print(f'Please geocode using "single_address" and "TempIDZ" fields and place results in "geocoded_in" folder')
+    
+    return address_lines

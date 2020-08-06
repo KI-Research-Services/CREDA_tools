@@ -32,12 +32,10 @@ def split_df_addresses(addr_df: pd.DataFrame):
     '''
     temp_idz = 0
     return_list = []
-
-    for row in addr_df.iterrows():
+    for idx, row in addr_df.iterrows():
         addresses = row.parsed_addr
         for address in addresses:
             if re.match('\\d+-\\d+.+', address) is not None:
-                print(address)
                 start = re.search('(\\d+)-(\\d+)', address).group(1)
                 end = re.search('(\\d+)-(\\d+)', address).group(2)
                 partial_address = re.search('(\\d+)-(\\d+) (.+)', address).group(3)
@@ -45,11 +43,11 @@ def split_df_addresses(addr_df: pd.DataFrame):
                     temp_idz = temp_idz + 1
                     single_address = f'{r_del} {partial_address}'
                     return_list.append({'TempID':row.TempID, 'TempIDZ':temp_idz,
-                                        'address':single_address})
+                                        'single_address':single_address})
             else:
                 temp_idz = temp_idz + 1
                 return_list.append({'TempID':row.TempID, 'TempIDZ':temp_idz,
-                                    'address':address})
+                                    'single_address':address})
 
 
     return_df = pd.DataFrame(return_list)
