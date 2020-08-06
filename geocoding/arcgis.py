@@ -12,14 +12,15 @@ from CREDA_tools.geocoding import validators
 
 class ArcGISValidator(validators.AddressValidator):
     '''This class runs data through the ArcGIS Validator/Geocoder'''
-    def __init__(self, address_df):
+    def __init__(self, address_df, geocode_file = "ArcGIS.csv"):
         super().__init__(address_df)
         self.temp_file = "temp_files\\ArcGIS_temp.csv"
-        self.geocode_file = "CREDA_tools\\ceocoding\\geocoding_data\\ArcGIS.csv"
+        self.geocode_file = f'geocoded_in\\{geocode_file}'
         self.process_addresses()
         
     def process_addresses(self):
         if os.path.exists(self.geocode_file):
+            print("Path exists")
             old_run = pd.read_csv(self.geocode_file)
             old_run.drop_duplicates(inplace=True)
             combined = pd.merge(self.address_df, old_run, how ='left', on=['TempIDZ'])

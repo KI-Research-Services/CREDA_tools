@@ -20,18 +20,18 @@ class ValidatorFactory():
     def __init__(self):
         pass
 
-    def create_validator(self, validator_type, address_df):
+    def create_validator(self, validator_type, address_df, geocode_file=None):
         '''Instantiates and returns the requested validator, based on input'''
         if validator_type == 'Census':
             import CREDA_tools.geocoding.census as census
-            return census.CensusValidator(address_df) 
+            return census.CensusValidator(address_df, geocode_file) 
         if validator_type == 'ArcGIS':
             import CREDA_tools.geocoding.arcgis as arcgis
-            return arcgis.ArcGISValidator(address_df)
+            return arcgis.ArcGISValidator(address_df, geocode_file)
         if validator_type == 'GAPI':
             import CREDA_tools.geocoding.gapi as gapi
-            return gapi.GAPIValidator(address_df)
-        if validator_type == 'LightBox':
+            return gapi.GAPIValidator(address_df, geocode_file)
+        if validator_type == 'Lightbox':
             import CREDA_tools.geocoding.lightbox as lightbox
-            return lightbox.LightBoxValidator(address_df)
+            return lightbox.LightBoxValidator(address_df, geocode_file)
         return None

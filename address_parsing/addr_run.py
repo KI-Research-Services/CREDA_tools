@@ -88,6 +88,7 @@ def parse_addr_df(address_lines: pd.DataFrame, expand_addresses: bool = True, ou
         address_lines.TempIDZ = address_lines.TempID
         
     outfile = f'addresses_out\\{outfile}'
+    address_lines = address_lines[['TempID','TempIDZ','addr','single_address', 'city', 'state', 'zip', 'parsed_addr', 'flags']]
     address_lines[['TempID', 'TempIDZ','addr','single_address','city','state','zip']].to_csv(outfile, index=False)
     print(f'\nAddress parsing now completed and saved to addresses_out\\{outfile}')
     print(f'Please geocode using "single_address" and "TempIDZ" fields and place results in "geocoded_in" folder')

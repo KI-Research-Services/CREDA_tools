@@ -9,14 +9,14 @@ import os
 
 import pandas as pd
 
-from CREDA_tools.geocodingeocoding import validators
+from CREDA_tools.geocoding import validators
 
 class LightBoxValidator(validators.AddressValidator):
     '''This class runs data through the LightBox Validator/Geocoder'''
-    def __init__(self, address_df):
+    def __init__(self, address_df, geocode_file = "Lightbox.csv"):
         super().__init__(address_df)
         self.temp_file = "temp_files\\LightBox_temp.csv"
-        self.geocode_file = "CREDA_tools\\geocoding\\geocoding_data\\LightBox.csv"
+        self.geocode_file = f'geocoded_in\\{geocode_file}'
         self.process_addresses()
         
     def process_addresses(self):
