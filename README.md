@@ -55,6 +55,35 @@ from CREDA_tools import helper
 project = helper.CREDA_Project("test_run")
 ```
 
+The above code creates a test_run folder, with several subfolders for the analysis. You may then copy csv data files, at least with address field 'addr', into the addresses_in subfolder of your project. Now we can add add these sources as well as analysis steps. Below, we provide sample code for adding a wake forest permitting data set, as well as adding two geocoders to process it once the addresses are clean.
+```
+project.add_data_source("wake_permitting", "wake_permitting.csv") #Inputs are 1) the name of the data source and 2) the file in addresses_in
+project.add_geocoder("wake_permitting", "ArcGIS") #Input is 1) the name of the source you wish the analysis to be run on, and 2) the processing step.
+project.add_geocoder("wake_permitting", "Lightbox")
+# project.remove_geocoder("wake_permitting", "Lightbox") -> this would remove the analysis if needed.
+```
+CREDA_tools support a number of common geocoders, running some within the pipeline and other incorporating their output. Available geocoders can be found at (PLACEHOLDER). We do not provide licenses or API tokens to access these resources.
+
+Once an analysis pipeline has been setup, you can begin the current run with the run_addresses() function. This will produce cleaned address, with expanded ranges (1-7 main street converted to 1 main street, 3 main street... 7 main street). Output will be saved to the addresses_out subfolder. These can then be run through geocoders.
+```
+project.run_addresses()
+```
+
+Geocoder results can now be added into our dataset, parcel piercing performed, and best match among geocoders selected based on confidence scores. Piercing step will require a shapefile of eligible parcels.
+
+```
+project.add_geocoder_results()
+project.perform_piercing("test_run\\shapefiles\\shape_subset.csv")
+project.select_best_match()
+```
+
+To provide a more robust unique key for properties, we recommend a final switch to UBIDs for the highest-confidence shape. If the project has multiple sources, properties between sets can be joined through a Jaccard index calculation. This allows combination of, for instance, permitting and pricing information on properties even when addresses have errors or change over time.
+
+```
+project.convert_to_UBIDs()
+project.join_datasets()
+```
+
 ## Contributing
 
 We welcome all help in furthering the CREDA Initiative. To contribute in code development, please read (THIS IS ONLY A PLACEHOLDER) [CONTRIBUTING.md](https://gist.github.com/PurpleBooth/b24679402957c63ec426) for details on our code of conduct, and the process for submitting pull requests to us. To collaborate with additional data and tools, please reach out to David_Fisher @ kenan-flagler.unc.edu.
