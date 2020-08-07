@@ -9,7 +9,7 @@ import os
 
 import pandas as pd
 
-from CREDA_tools.geocodingeocoding import validators
+from CREDA_tools.geocoding import validators
 
 class GAPIValidator(validators.AddressValidator):
     '''This class runs data through the GAPI Validator/Geocoder'''

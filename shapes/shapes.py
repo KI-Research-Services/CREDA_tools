@@ -9,7 +9,6 @@ import pandas as pd
 from shapely.geometry import Point#, Polygon
 from shapely.geos import WKTReadingError #Needed for new error
 import shapely.wkt
-import time
 
 class ShapesList():
     
