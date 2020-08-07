@@ -39,75 +39,10 @@ class ShapesList():
     def process_df(self,complete_df:pd.DataFrame, validator:str, offset:float = 0):
         print(f'Processing for {validator}')
         results = []
-        subset_df = complete_df[['TempIDZ','PARCEL_APN',f'{validator}_long',f'{validator}_lat']]
-        subset_df['PARCEL_APN'] = subset_df['PARCEL_APN'].round(0).astype(np.int64)
-        
-        subset_df.columns = ['TempIDZ','PARCEL_APN','long','lat']
-        count = 0
-        for idx, item in subset_df.iterrows():
-            #print(f'\n\n\n{item.PARCEL_APN}')
-            point = Point(item.long, item.lat)
-            bounded_xy = []
-            pierced = []
-            filtered_shapes = self.shape_df[(self.shape_df.minx - offset < item.long) &
-                           (self.shape_df.maxx + offset > item.long) &
-                           (self.shape_df.miny - offset < item.lat) &
-                           (self.shape_df.maxy + offset > item.lat)]
-            #print(f'Filtered shapes are {filtered_shapes}')
-            #print(f'Total of {filtered_shapes.shape[0]}')
-            #Test for piercing and boundedness
-            for i, shape in filtered_shapes.iterrows():
-                polygon = shapely.wkt.loads(shape.polygon)
-                if point.within(polygon): #If it pierces the shape, add to the pierced list
-                    #print("Pierced")
-                    if shape.shapeID not in pierced:
-                        pierced.append(shape.shapeID)
-                else: #otherwise add it to the bounded list
-                    #print("Bounded")
-                    if shape.shapeID not in bounded_xy:
-                        bounded_xy.append(shape.shapeID)
-                #print(f'Pierced shapes are {pierced}')
-                #print(f'Bounded shapes are {bounded_xy}')
-            #Not false positive or pierced
-            if (len(pierced) == 0) and (filtered_shapes.shape[0]>0):
-                nearest = nearest_neighbor(point, filtered_shapes)
-                #print(f'Nearest is {nearest}')
-                pierced.append(nearest)
-                bounded_xy.remove(nearest)
-            
-                
-            #Get counds of each list
-            pierced_count = len(pierced)
-                
-            #Model results
-            if item.PARCEL_APN in pierced:
-                if pierced_count == 1:
-                    status = "Pierced"
-                else:
-                    status = "Pierced_Multiple"
-            elif pierced_count > 0:
-                status = "False Positive"
-            elif item.PARCEL_APN in bounded_xy:
-                status = "Bounded_xy"
-            else:
-                status = "Not Found"
-            #print(status)
-            results.append({'TempIDZ':item.TempIDZ, f'{validator}_status':status,
-                                f'{validator}_Pierced_APNs':pierced})
-            count+=1
-    
-
-        to_return = pd.DataFrame.from_dict(results)
-        return(to_return)
-        
-    def process_df_no_APN(self,complete_df:pd.DataFrame, validator:str, offset:float = 0):
-        print(f'Processing for {validator}')
-        results = []
         subset_df = complete_df[['TempIDZ',f'{validator}_long',f'{validator}_lat']]
         subset_df.columns = ['TempIDZ','long','lat']
         count = 0
         for idx, item in subset_df.iterrows():
-            #print(f'\n\n\n{item.PARCEL_APN}')
             point = Point(item.long, item.lat)
             bounded_xy = []
             pierced = []

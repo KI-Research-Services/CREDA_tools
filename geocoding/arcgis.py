@@ -13,6 +13,15 @@ from CREDA_tools.geocoding import validators
 
 class ArcGISValidator(validators.AddressValidator):
     '''This class runs data through the ArcGIS Validator/Geocoder'''
+    
+    score_dict = {'SubAddress':0.95,
+                  'PointAddress':0.90,
+                  'StreetAddress':0.80,
+                  'StreetAddressExt':0.65,
+                  'StreetName':0.60,
+                  'Locality':0.50
+                  }
+    
     def __init__(self, address_df, geocode_file):
         super().__init__(address_df)
         self.temp_file = "temp_files\\ArcGIS_temp.csv"
@@ -28,9 +37,12 @@ class ArcGISValidator(validators.AddressValidator):
             combined = pd.merge(self.address_df, old_run, how ='left', on=['TempIDZ'])
         else:
             print(f'Failed to find file {self.geocode_file}')
-
-        self.address_df = combined[['TempIDZ','Addr_type','DisplayX','DisplayY']]
-        self.address_df.rename(columns = {'Addr_type':'ArcGIS_addr_type', 'DisplayX':'ArcGIS_long',
+        
+        combined['ArcGIS_confidence'] = 0
+        for key, value in self.score_dict.items():
+            combined.loc[combined['Addr_type'] == key, 'ArcGIS_confidence'] = value
+        self.address_df = combined[['TempIDZ','ArcGIS_confidence','DisplayX','DisplayY']]
+        self.address_df.rename(columns = {'DisplayX':'ArcGIS_long',
                                           'DisplayY':'ArcGIS_lat'}, inplace=True)
         
     def run_validator_matches(self, to_process):

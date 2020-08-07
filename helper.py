@@ -14,12 +14,14 @@ from CREDA_tools.geocoding import validators
 import CREDA_tools.shapes.shapes as SHP
 
 class CREDA_Project():
-
+    '''This class acts as an easy pipeline tool to simplify CREDA analyses'''
     supported_analyses = ['ArcGIS', 'Lightbox', 'GAPI']
 
     def __init__(self, name: str):
         '''
-
+        Basic initialization for the analysis helper. First, creates the folder
+        structure for the new analysis. Second, sets up the needed variables.
+        Finally, it prints the current run status via the print_run() function.
 
         Parameters
         ----------
@@ -31,17 +33,21 @@ class CREDA_Project():
         None.
 
         '''
-        self.run_name = name
-        self.sources = {}
-        self.source_analyses = {}
-        self.parsed_addresses = []
-        self.address_index = {}
+
         '''
         os.mkdir(name)
         for folder in ['address_in', 'address_out', 'logs', 'geocode_in', 'shapes']:
             os.mkdir(f'{name}\\{folder}')
         '''
         print(f'Run {name} created.')
+
+        # setting up variables needed for rest of the run
+        self.run_name = name
+        self.sources = {}
+        self.source_analyses = {}
+        self.parsed_addresses = []
+        self.address_index = {}
+
         self.print_run()
 
     def print_run(self):
@@ -154,9 +160,9 @@ class CREDA_Project():
 
     def run_addresses(self):
         '''
-        This program runs all address files through the address parser and splitter
-        functions. The address output is retained in memory, and intermediate
-        output files are stored in the address_out directory
+        This function runs all address files through the address parser and
+        splitter functions. The address output is retained in memory, and
+        intermediate output files are stored in the address_out directory
 
         Returns
         -------
@@ -173,7 +179,8 @@ class CREDA_Project():
             try:
                 address_lines['addr'] = address_lines['addr'].str.lower()
             except KeyError:
-                print("\n***ERROR***\n-Invalid input format. Infile must have address columns 'addr'.")
+                print("\n***ERROR***\n-Invalid input format. Infile must have"
+                      " address columns 'addr'.")
                 print(address_lines.columns)
                 return None
             address_lines['parsed_addr'] = address_lines['addr']
@@ -192,11 +199,12 @@ class CREDA_Project():
             address_lines[['TempID', 'TempIDZ', 'addr', 'single_address', 'city', 'state', 'zip']].to_csv(outfile, index=False)
             self.parsed_addresses.append(address_lines)
             self.address_index[source] = len(self.parsed_addresses) - 1
+            return None
 
 
     def add_geocoder_results(self):
         '''
-        This program goes through each geocoder for each set of parsed addresses,
+        This function goes through each geocoder for each set of parsed addresses,
         so by the end of this function each address set should have at least 3
         addtional columns per geocoder, 1 each for latitude and longitude, and one
         for a measure of confidence.
@@ -223,7 +231,8 @@ class CREDA_Project():
 
     def perform_piercing(self, shapefile: str):
         '''
-
+        This function loads the shapefile and runs each set up geocoder coords
+        against it to check piercing.
 
         Parameters
         ----------
@@ -241,7 +250,42 @@ class CREDA_Project():
             geocoded_addrs = self.parsed_addresses[self.address_index[source]]
 
             for geocoder in geocoders:
-                temp_pierced = shapes.process_df_no_APN(geocoded_addrs, geocoder, offset=0.0005)
+                temp_pierced = shapes.process_df(geocoded_addrs, geocoder, offset=0.0005)
                 geocoded_addrs = pd.merge(geocoded_addrs, temp_pierced, how='left', on='TempIDZ')
             geocoded_addrs.to_csv(f'{self.run_name}\\piercing_results\\{source}.csv')
             self.parsed_addresses[self.address_index[source]] = geocoded_addrs
+
+    def select_best_match(self):
+        for source, geocoders in self.source_analyses.items():
+            #print(f'geocoders are {geocoders}')
+            addresses_with_pierced = self.parsed_addresses[self.address_index[source]]
+            best_rows = []
+            for idx, row in addresses_with_pierced.iterrows():
+                #print(row)
+                found = False
+                best_geocoder = ""
+                best_geocoder_score = 0
+                for geocoder in geocoders:
+                    #print(f'geocoder is {geocoder}')
+                    if row[f'{geocoder}_status'] == 'Pierced':
+                        if row[f'{geocoder}_confidence'] > best_geocoder_score:
+                            best_geocoder = geocoder
+                            best_geocoder_score = row[f'{geocoder}_confidence']
+                            found = True
+                        else:
+                            pass
+                            #print(row[f'{geocoder}_confidence'], end=" ")
+                            #print(f'vs {best_geocoder_score}')
+                    else:
+                        pass
+                        #print(row[f'{geocoder}_status'])
+                if found:
+                    row['best_geocoder'] = best_geocoder
+                    row['best_geocoder_APN'] = row[f'{best_geocoder}_Pierced_APNs']
+                    best_rows.append(row)
+            temp_df = pd.concat(best_rows)
+            print('Reached the end')
+            print(best_rows)
+            print(temp_df)
+                
+                

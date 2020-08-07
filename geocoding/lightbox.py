@@ -25,8 +25,10 @@ class LightBoxValidator(validators.AddressValidator):
             old_run.drop_duplicates(inplace=True)
             combined = pd.merge(self.address_df, old_run, how ='left', on=['TempIDZ'])
 
-        self.address_df = combined[['TempIDZ','longitude','latitude']]
-        self.address_df.rename(columns = {'longitude':'Lightbox_long','latitude':'Lightbox_lat'}, inplace=True)
+        self.address_df = combined[['TempIDZ','longitude','latitude', 's_street_number']]
+        self.address_df.rename(columns = {'longitude':'Lightbox_long',
+                                          'latitude':'Lightbox_lat',
+                                          's_street_number':'Lightbox_confidence'}, inplace=True)
         
     def run_validator_matches(self, to_process):
         '''Returns validated, Geocoded addresses for self.address_df, using the LightBox tool'''
