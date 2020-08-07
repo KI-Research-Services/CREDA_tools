@@ -5,6 +5,8 @@ Created on Thu Aug  6 12:16:30 2020
 @author: fisherd
 """
 
+import os
+
 import pandas as pd
 
 # my libraries
@@ -34,11 +36,11 @@ class CREDA_Project():
 
         '''
 
-        '''
+        
         os.mkdir(name)
-        for folder in ['address_in', 'address_out', 'logs', 'geocode_in', 'shapes']:
+        for folder in ['addresses_in', 'addresses_out', 'logs', 'final_results', 'geocoded_in', 'piercing_results', 'shapefiles']:
             os.mkdir(f'{name}\\{folder}')
-        '''
+        
         print(f'Run {name} created.')
 
         # setting up variables needed for rest of the run
@@ -256,6 +258,16 @@ class CREDA_Project():
             self.parsed_addresses[self.address_index[source]] = geocoded_addrs
 
     def select_best_match(self):
+        '''
+        For each address this selects the best match based on pure confidence
+        scores. It saves the new dataframe to the project object and a copy to
+        the final_results folder
+
+        Returns
+        -------
+        None.
+
+        '''
         for source, geocoders in self.source_analyses.items():
             #print(f'geocoders are {geocoders}')
             addresses_with_pierced = self.parsed_addresses[self.address_index[source]]
@@ -284,8 +296,8 @@ class CREDA_Project():
                     row['best_geocoder_APN'] = row[f'{best_geocoder}_Pierced_APNs']
                     best_rows.append(row)
             temp_df = pd.concat(best_rows)
-            print('Reached the end')
-            print(best_rows)
-            print(temp_df)
-                
-                
+            #print('Reached the end')
+            #print(best_rows)
+            #print(temp_df)
+            temp_df.to_csv(f'{self.run_name}\\final_results\\{source}_results.csv')
+            self.parsed_addresses[self.address_index[source]] = temp_df
