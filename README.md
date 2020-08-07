@@ -47,6 +47,14 @@ Give an example
 ```
 -->
 
+### Basic Usage
+Once you have a root folder with CREDA_tools inside it, basic use of CREDA_tools is simple. For scripts within the root folder, you can begin a new project with the helper module. Import helper, and then instatiate a new CREDA_Project module with the project title.
+```
+from CREDA_tools import helper
+
+project = helper.CREDA_Project("test_run")
+```
+
 ## Contributing
 
 We welcome all help in furthering the CREDA Initiative. To contribute in code development, please read (THIS IS ONLY A PLACEHOLDER) [CONTRIBUTING.md](https://gist.github.com/PurpleBooth/b24679402957c63ec426) for details on our code of conduct, and the process for submitting pull requests to us. To collaborate with additional data and tools, please reach out to David_Fisher @ kenan-flagler.unc.edu.
