@@ -13,7 +13,26 @@ from CREDA_tools.geocoding import validators
 
 class LightBoxValidator(validators.AddressValidator):
     '''This class runs data through the LightBox Validator/Geocoder'''
+    
     def __init__(self, address_df, geocode_file):
+        '''
+        The init for the LightBoxValidator class takes the actual geocoded file
+        and adds it to the current dataframe of address. It returns the updated
+        address dataframe, with additional columns for lat/long and a confidence
+        measure.
+
+        Parameters
+        ----------
+        address_df : TYPE
+            DESCRIPTION.
+        geocode_file : TYPE
+            DESCRIPTION.
+
+        Returns
+        -------
+        None.
+
+        '''
         super().__init__(address_df)
         self.temp_file = "temp_files\\LightBox_temp.csv"
         self.geocode_file = geocode_file
