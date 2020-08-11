@@ -23,10 +23,10 @@ class LightBoxValidator(validators.AddressValidator):
 
         Parameters
         ----------
-        address_df : TYPE
-            DESCRIPTION.
-        geocode_file : TYPE
-            DESCRIPTION.
+        address_df : pd.DataFrame
+            The current address dataframe after address parsing.
+        geocode_file : str
+            A filename for your current LightBox geocoded results file.
 
         Returns
         -------
