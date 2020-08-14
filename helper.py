@@ -39,7 +39,7 @@ class CREDA_Project():
         
         os.mkdir(name)
         for folder in ['addresses_in', 'addresses_out', 'logs', 'final_results', 'geocoded_in', 'piercing_results', 'shapefiles']:
-            os.mkdir(f'{name}\\{folder}')
+            os.makedirs(f'{name}/{folder}')
         
         print(f'Run {name} created.')
 
