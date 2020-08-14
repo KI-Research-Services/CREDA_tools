@@ -36,10 +36,10 @@ class CREDA_Project():
 
         '''
 
-        
-        os.mkdir(name)
+        if not os.path.exists(name):
+            os.mkdir(name)
         for folder in ['addresses_in', 'addresses_out', 'logs', 'final_results', 'geocoded_in', 'piercing_results', 'shapefiles']:
-            os.makedirs(f'{name}/{folder}')
+            os.makedirs(f'{name}/{folder}', exist_ok=True)
         
         print(f'Run {name} created.')
 
