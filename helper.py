@@ -6,6 +6,7 @@ Created on Thu Aug  6 12:16:30 2020
 """
 
 import os
+from pathlib import Path
 
 import pandas as pd
 
@@ -35,16 +36,18 @@ class CREDA_Project():
         None.
 
         '''
+        run_dir = Path.cwd() / name
 
-        if not os.path.exists(name):
-            os.mkdir(name)
+        if not os.path.exists(run_dir):
+            os.mkdir(run_dir)
         for folder in ['addresses_in', 'addresses_out', 'logs', 'final_results', 'geocoded_in', 'piercing_results', 'shapefiles']:
-            os.makedirs(f'{name}/{folder}', exist_ok=True)
+            os.makedirs(run_dir / folder, exist_ok=True)
         
         print(f'Run {name} created.')
 
         # setting up variables needed for rest of the run
         self.run_name = name
+        self.run_dir = run_dir
         self.sources = {}
         self.source_analyses = {}
         self.parsed_addresses = []
@@ -104,7 +107,10 @@ class CREDA_Project():
         None.
 
         '''
-        self.sources[source_name] = source_file
+        temp_path = Path(source_file)
+        if not temp_path.is_absolute():
+            temp_path = self.run_dir / "addresses_in" / temp_path
+        self.sources[source_name] = temp_path
         self.source_analyses[source_name] = []
 
         self.print_run()
@@ -172,7 +178,6 @@ class CREDA_Project():
 
         '''
         for source, address_file in self.sources.items():
-            address_file = f'{self.run_name}\\addresses_in\\{address_file}'
             address_lines = pd.read_csv(address_file)
             address_lines.reset_index(inplace=True)
             address_lines.rename(columns={'index':'TempID'}, inplace=True)
@@ -196,7 +201,8 @@ class CREDA_Project():
 
             temp = addr_splitter.split_df_addresses(address_lines[['TempID', 'parsed_addr']])
             address_lines = pd.merge(address_lines, temp, how='inner', on='TempID')
-            outfile = f'{self.run_name}\\addresses_out\\{source}.csv'
+            #outfile = f'{self.run_name}\\addresses_out\\{source}.csv'
+            outfile = Path.cwd() / self.run_name / 'addresses_out' / f'{source}.csv'
             address_lines = address_lines[['TempID', 'TempIDZ', 'addr', 'single_address', 'city', 'state', 'zip', 'parsed_addr', 'flags']]
             address_lines[['TempID', 'TempIDZ', 'addr', 'single_address', 'city', 'state', 'zip']].to_csv(outfile, index=False)
             self.parsed_addresses.append(address_lines)
@@ -222,7 +228,8 @@ class CREDA_Project():
         for source, geocoders in self.source_analyses.items():
             geocoded_addrs = self.parsed_addresses[self.address_index[source]]
             for geocoder in geocoders:
-                geocode_file = f'{self.run_name}\\geocoded_in\\{source}_{geocoder}.csv'
+                #geocode_file = f'{self.run_name}\\geocoded_in\\{source}_{geocoder}.csv'
+                geocode_file = self.run_dir / "geocoded_in" / f'{source}_{geocoder}.csv'
                 print(f'Expecting infile at {geocode_file}')
                 temp_validator = validator_factory.create_validator(geocoder, geocoded_addrs, geocode_file)
                 validated_df = temp_validator.get_validator_matches()
@@ -246,7 +253,11 @@ class CREDA_Project():
         None.
 
         '''
-        shapes = SHP.ShapesList(shapefile)
+        temp_shapefile = Path(shapefile)
+        if not temp_shapefile.is_absolute():
+            temp_shapefile = self.run_dir / "shapefiles" / temp_shapefile
+        print(temp_shapefile)
+        shapes = SHP.ShapesList(temp_shapefile)
 
         for source, geocoders in self.source_analyses.items():
             geocoded_addrs = self.parsed_addresses[self.address_index[source]]
@@ -254,7 +265,8 @@ class CREDA_Project():
             for geocoder in geocoders:
                 temp_pierced = shapes.process_df(geocoded_addrs, geocoder, offset=0.0005)
                 geocoded_addrs = pd.merge(geocoded_addrs, temp_pierced, how='left', on='TempIDZ')
-            geocoded_addrs.to_csv(f'{self.run_name}\\piercing_results\\{source}.csv')
+            #geocoded_addrs.to_csv(f'{self.run_name}\\piercing_results\\{source}.csv')
+            geocoded_addrs.to_csv(self.run_dir / 'piercing_results' / f'{source}.csv')
             self.parsed_addresses[self.address_index[source]] = geocoded_addrs
 
     def select_best_match(self):
@@ -299,5 +311,7 @@ class CREDA_Project():
             #print('Reached the end')
             #print(best_rows)
             #print(temp_df)
-            temp_df.to_csv(f'{self.run_name}\\final_results\\{source}_results.csv')
+            
+            #temp_df.to_csv(f'{self.run_name}\\final_results\\{source}_results.csv')
+            temp_df.to_csv(self.run_dir / 'final_results' / f'{source}_results.csv')
             self.parsed_addresses[self.address_index[source]] = temp_df
