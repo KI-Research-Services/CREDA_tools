@@ -206,7 +206,7 @@ class CREDA_Project():
             #outfile = f'{self.run_name}\\addresses_out\\{source}.csv'
             outfile = Path.cwd() / 'addresses_out' / f'{source}.csv'
             address_lines = address_lines[['TempID', 'TempIDZ', 'addr', 'single_address', 'city', 'state', 'zip', 'parsed_addr', 'flags']]
-            address_lines[['TempID', 'TempIDZ', 'addr', 'single_address', 'city', 'state', 'zip']].to_csv(outfile, index=False)
+            address_lines.to_csv(outfile, index=False)
             self.parsed_addresses.append(address_lines)
             self.address_index[source] = len(self.parsed_addresses) - 1
             return None
