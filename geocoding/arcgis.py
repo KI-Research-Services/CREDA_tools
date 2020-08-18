@@ -6,6 +6,7 @@ Created on Mon May 25 22:37:41 2020
 """
 
 import os
+from pathlib import Path
 
 import pandas as pd
 
@@ -24,7 +25,7 @@ class ArcGISValidator(validators.AddressValidator):
     
     def __init__(self, address_df, geocode_file):
         super().__init__(address_df)
-        self.temp_file = self.run_dir / "temp_files" / "ArcGIS_temp.csv"
+        self.temp_file = Path.cwd() / "temp_files" / "ArcGIS_temp.csv"
         self.geocode_file = geocode_file
         self.process_addresses()
         

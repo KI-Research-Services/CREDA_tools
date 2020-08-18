@@ -6,6 +6,7 @@ Created on Tue May 26 13:15:29 2020
 """
 
 import os
+from pathlib import Path
 
 import pandas as pd
 
@@ -34,7 +35,7 @@ class LightBoxValidator(validators.AddressValidator):
         '''
         
         super().__init__(address_df)
-        self.temp_file = self.run_dir / "temp_files" / "LightBox_temp.csv"
+        self.temp_file = Path.cwd() / "temp_files" / "LightBox_temp.csv"
         self.geocode_file = geocode_file
         self.process_addresses()
         
