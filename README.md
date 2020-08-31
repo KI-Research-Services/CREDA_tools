@@ -73,7 +73,7 @@ Geocoder results can now be added into our dataset, parcel piercing performed, a
 
 ```
 project.add_geocoder_results()
-project.perform_piercing("test_run\\shapefiles\\shape_subset.csv")
+project.perform_piercing("shape_subset.csv")
 project.select_best_match()
 ```
 
