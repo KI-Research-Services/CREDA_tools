@@ -24,10 +24,10 @@ class ValidatorFactory():
 
     def create_validator(self, validator_type, address_df, geocode_file=None):
         '''Instantiates and returns the requested validator, based on input'''
-        print(f"In validators.py, geocoding file is {geocode_file}")
+        #print(f"In validators.py, geocoding file is {geocode_file}")
         if validator_type == 'Census':
             import CREDA_tools.geocoding.census as census
-            return census.CensusValidator(address_df, geocode_file) 
+            return census.CensusValidator(address_df) 
         if validator_type == 'ArcGIS':
             import CREDA_tools.geocoding.arcgis as arcgis
             return arcgis.ArcGISValidator(address_df, geocode_file)

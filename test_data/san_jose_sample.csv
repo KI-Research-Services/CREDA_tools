@@ -1,4 +1,4 @@
-FullAddres,state,Post_Code,Lat,Long
+addr,state,post_Code,Lat,Long
 1620 Zanker Rd,CA,95112,37.37200243,-121.9096594
 1429 Sierra Creek Way,CA,95132,37.40548999,-121.8519917
 1425 Sierra Creek Way,CA,95132,37.4053608,-121.8518541

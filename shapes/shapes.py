@@ -15,7 +15,6 @@ class ShapesList():
     def __init__(self, file):
         shape_frame = pd.read_csv(file)
         shape_frame.dropna(inplace=True)
-        shape_frame['PARCEL_APN'] = shape_frame['PARCEL_APN'].round(0).astype(np.int64)
         shape_frame.drop_duplicates(inplace=True)
         shapes = []
         self.failed_shapes = []
@@ -26,8 +25,10 @@ class ShapesList():
                 #print(idx)
                 polygon = shapely.wkt.loads(item.GEOM)
                 minx, miny, maxx, maxy = polygon.bounds
-                shapes.append({'shapeID':item.PARCEL_APN, 'polygon':item.GEOM,
-                               'minx':minx, 'maxx':maxx, 'miny': miny, 'maxy':maxy})
+                centerx, centery = (polygon.centroid.coords)[0]
+                shapes.append({'shapeID':idx, 'polygon':item.GEOM,
+                               'minx':minx, 'maxx':maxx, 'miny': miny, 'maxy':maxy,
+                               'centerx':centerx, 'centery':centery})
             except WKTReadingError:
                 self.failed_shapes.append(idx)
         
@@ -38,8 +39,8 @@ class ShapesList():
     def process_df(self,complete_df:pd.DataFrame, validator:str, offset:float = 0):
         print(f'Processing for {validator}')
         results = []
-        subset_df = complete_df[['TempIDZ',f'{validator}_long',f'{validator}_lat']]
-        subset_df.columns = ['TempIDZ','long','lat']
+        subset_df = complete_df[[f'{validator}_long',f'{validator}_lat']]
+        subset_df.columns = ['long','lat']
         count = 0
         for idx, item in subset_df.iterrows():
             point = Point(item.long, item.lat)
@@ -78,11 +79,13 @@ class ShapesList():
                 status = "Pierced" if (pierced_count==1) else "Pierced_Multiple"
             else:
                 status = "Not Found"
-            #print(status)
-            results.append({'TempIDZ':item.TempIDZ, f'{validator}_status':status,
-                                f'{validator}_Pierced_APNs':pierced})
+            #print(f'Item {item}')
+            results.append({'TempIDZ':idx, f'{validator}_status':status,
+                                f'{validator}_pierced_ids':pierced})
             count+=1
         to_return = pd.DataFrame.from_dict(results)
+        to_return.set_index('TempIDZ')
+        to_return.index = to_return.index.astype(int)
         return(to_return)
 
     def get_failed_shapes(self):
