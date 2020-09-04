@@ -55,12 +55,12 @@ from CREDA_tools import helper
 project = helper.CREDA_Project("test_run")
 ```
 
-The above code creates a test_run folder, with several subfolders for the analysis. You may then copy csv data files, at least with address field 'addr', into the addresses_in subfolder of your project. Now we can add add these sources as well as analysis steps. Below, we provide sample code for using the San Diego Sample dataset (found in CREDA_tools/test_data/san_diego_sample.csv), as well as adding two geocoders to process it once the addresses are clean. The source data for this is freely available from San Diego's city website. The US Census geocoder is freely available. The GAPI geocoder requires setup, but typically provides a free allotment to users after registration.
+The above code creates a test_run folder, with several subfolders for the analysis. You may then copy csv data files, at least with address field 'addr', into the addresses_in subfolder of your project. Now we can add add these sources as well as analysis steps. Below, we provide sample code for using the San Jose sample dataset (found in CREDA_tools/test_data/san_jose_sample.csv), as well as adding two geocoders to process it once the addresses are clean. The source data for this is freely available from San Jose's city website. The US Census geocoder is freely available. The GAPI geocoder requires setup, but typically provides a free allotment to users after registration.
 ```
-project.add_data_source("san_diego", "san_diego_sample.csv") #Inputs are 1) the name of the data source and 2) the file in addresses_in
-project.add_geocoder("san_diego", "Census") #Input is 1) the name of the source you wish the analysis to be run on, and 2) the processing step.
-project.add_geocoder("san_diego", "GAPI")
-# project.remove_geocoder("san_diego", "GAPI") -> this would remove the analysis if needed.
+project.add_data_source("san_jose", "san_jose_sample.csv") #Inputs are 1) the name of the data source and 2) the file in addresses_in
+project.add_geocoder("san_jose", "Census") #Input is 1) the name of the source you wish the analysis to be run on, and 2) the processing step.
+project.add_geocoder("san_jose", "GAPI")
+# project.remove_geocoder("san_jose", "GAPI") -> this would remove the analysis if needed.
 ```
 CREDA_tools support a number of common geocoders, running some within the pipeline and other incorporating their output. Available geocoders can be found at (PLACEHOLDER). We do not provide licenses or API tokens to access these resources.
 
