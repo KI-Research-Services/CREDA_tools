@@ -301,7 +301,7 @@ class CREDA_Project():
             #print(f'geocoders are {geocoders}')
             addresses_with_pierced = self.parsed_addresses[self.address_index[source]]
             best_rows = []
-            for row in addresses_with_pierced.iterrows():
+            for _, row in addresses_with_pierced.iterrows():
                 #print(row)
                 found = False
                 best_geocoder = ""
@@ -384,10 +384,50 @@ class CREDA_Project():
 
             self.parsed_addresses[self.address_index[source]] = pd.merge(df, UBID_df, how='left', left_index=True, right_index=True)
 
-    def join_output(self):
-        if len(self.parsed_addresses > 1):
+
+    def jaccard_join(self, df1: pd.DataFrame, df2: pd.DataFrame, threshold: int):
+        '''
+        Returns df1, expanded/contracted to all matches to df2 based on Jaccard index
+
+        Parameters
+        ----------
+        df1 : pd.DataFrame
+            The dataframe we are modifying with a foreign key column to df2
+        df2 : pd.DataFrame
+            The comparison dataframe we are checking for UBID overlap
+        threshold : int
+            The necessary Jaccard threshold needed to have a successful match
+
+        Returns
+        -------
+        A modified df1, now with a column for a foreign key to df2 where there
+        is a match. Individual df1 rows could be removed (no df2 matches), or
+        duplicated (multiple df2 matches)
+
+        '''
+        df1_rows = []
+        df1_matches = []
+        
+        for _, row_1 in df1.iterrows():
+            ubid_1 = bc.decode(row_1['UBID'])
+            for _, row_2 in df2.iterrows():
+                ubid_2 = bc.decode(row_2['UBID'])
+                score = ubid_1.jaccard(ubid_2)
+                if score:
+                    if(score>threshold):
+                        df1_rows.append(row_1)
+                        df1_matches.append(row_2['TempIDZ'])
+        results = pd.DataFrame(df1_rows)
+        results['matchIDZ'] = df1_matches
+        return results
+                
+
+    def join_output(self, threshold: int = 0.65):
+        
+        if len(self.parsed_addresses) > 1:
             merged = self.parsed_addresses[0]
-            for completed df in self.parsed_addresses[1:]:
-                print("Combining!!")
-        else:
-            return
+            for completed_df in self.parsed_addresses[1:]:
+                completed_df = self.jaccard_join(completed_df, merged, threshold)
+                merged = pd.merge(merged, completed_df, how="inner", left_on='TempIDZ', right_on='matchIDZ')
+        
+        merged.to_csv("final_output.csv")
