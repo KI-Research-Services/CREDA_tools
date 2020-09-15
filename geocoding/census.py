@@ -31,7 +31,7 @@ class CensusValidator(validators.AddressValidator):
         
     def run_validator_matches(self, to_process):
         '''Returns validated, Geocoded addresses for self.address_df, using the Census tool'''
-        to_process = to_process[['single_address', 'city', 'state', 'zip']]
+        to_process = to_process[['single_address', 'city', 'state', 'postal']]
         to_return = pd.DataFrame()
         start = 0
         end = increment = 900

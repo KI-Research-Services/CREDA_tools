@@ -164,7 +164,7 @@ class CREDA_Project():
             print("Invalid source/analysis combination")
         self.print_run()
 
-    def run_addresses(self):
+    def run_addresses(self, address_field: str = 'addr', postal_field: str = None, city_field: str = None):
         '''
         This function runs all address files through the address parser and
         splitter functions. The address output is retained in memory, and
@@ -181,19 +181,29 @@ class CREDA_Project():
             address_lines.rename(columns={'index':'TempID'}, inplace=True)
             address_lines['TempID'] = address_lines['TempID'] + 1
 
+            # TODO the normal pipeline standardizes fields within the run_addresses function. Is this optimal?
             try:
-                address_lines['addr'] = address_lines['addr'].str.lower()
+                if address_field != 'addr':
+                    address_lines.rename(columns={address_field:'addr'}, inplace=True)
+                if postal_field != 'postal':
+                    address_lines.rename(columns={postal_field:'postal'}, inplace=True)
+                if city_field != 'city':
+                    address_lines.rename(columns={city_field:'city'}, inplace=True)
             except KeyError:
                 print("\n***ERROR***\n-Invalid input format. Infile must have"
-                      " address columns 'addr'.")
-                print(address_lines.columns)
+                      " address column as 'addr' or specify the address column"
+                      " in the run_addresses command.\n"
+                      "For instance, run_addresses(address_field='addresses'")
+
                 return None
+            print(address_lines.columns)
+            address_lines['addr'] = address_lines['addr'].str.lower()
             address_lines['parsed_addr'] = address_lines['addr']
             address_lines['flags'] = ""
 
             # TODO can I speed this up with an apply returning a list???
             for idx, row in address_lines.copy().iterrows():
-                temp = algo_grammar.AddrParser(row['addr'])
+                temp = algo_grammar.AddrParser(row['addr'], row['postal'], row['city'])
                 row['parsed_addr'] = temp.get_addrs()
                 row['flags'] = temp.get_flags()
                 address_lines.iloc[idx] = row
@@ -202,9 +212,11 @@ class CREDA_Project():
             address_lines = pd.merge(address_lines, temp, how='inner', on='TempID')
             #outfile = f'{self.run_name}\\addresses_out\\{source}.csv'
             outfile = Path.cwd() / 'addresses_out' / f'{source}.csv'
+
+            # TODO should we be referencing specific columns here?
             address_lines = address_lines[['TempID', 'TempIDZ', 'addr',
                                            'single_address', 'city', 'state',
-                                           'zip', 'parsed_addr', 'flags']]
+                                           'postal', 'parsed_addr', 'flags']]
             address_lines.set_index('TempIDZ', inplace=True)
             address_lines.to_csv(outfile, index=False)
             self.parsed_addresses.append(address_lines)
@@ -371,3 +383,11 @@ class CREDA_Project():
             UBID_df.columns = ['UBID']
 
             self.parsed_addresses[self.address_index[source]] = pd.merge(df, UBID_df, how='left', left_index=True, right_index=True)
+
+    def join_output(self):
+        if len(self.parsed_addresses > 1):
+            merged = self.parsed_addresses[0]
+            for completed df in self.parsed_addresses[1:]:
+                print("Combining!!")
+        else:
+            return

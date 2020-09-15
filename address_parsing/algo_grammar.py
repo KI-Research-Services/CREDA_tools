@@ -8,8 +8,10 @@ Created on Thu Jul  2 22:26:36 2020
 import re
 
 class AddrParser:
+    
+    queens_zips = ['11354', '11355', '11356', '11357', '11358', '11359', '11360', '11365', '11366', '11367', '11412', '11423', '11432', '11433', '11434', '11435', '11436', '11101', '11102', '11103', '11104', '11105', '11106']
 
-    def __init__(self, address: str, testing: bool = False):
+    def __init__(self, address: str, postal: str = None, city: str = None, testing: bool = False):
         '''
         Basic initialization function for the AddrParser object
 
@@ -17,6 +19,12 @@ class AddrParser:
         ----------
         address : str
             A single, string formatted address to be parsed
+        postal : str
+            The postal code of the property. Used to identify potential problem
+            addresses like those in Queens, NY.
+        city : str
+            The city the property is in. Used to identify potential problem
+            addresses like those in Queens, NY.
         testing : bool, optional
             A simple flag for whether the function is being run in test mode. If
             set to true, several print statements give output at each step. The
@@ -29,6 +37,8 @@ class AddrParser:
         '''
         self.addresses = []
         self.flags = []
+        self.city = city
+        self.postal = postal
         address.strip()
         address = re.sub('\\.', '', address)
         if '(' in address:
@@ -45,6 +55,11 @@ class AddrParser:
             print(pieces, end="\n\n")
 
         pieces = self.initial_checks(pieces)
+        if testing:
+            print("After initial checks  : ", end="")
+            print(pieces, end="\n\n")
+        
+        pieces = self.non_address_checks(pieces)
         if testing:
             print("After initial checks  : ", end="")
             print(pieces, end="\n\n")
@@ -158,7 +173,8 @@ class AddrParser:
                    'Inf_01':'Contains Range Delimiter',
                    'Inf_02':'Long Number',
                    'Inf_03':'Ambiguous Direction, Unit',
-                   'Inf_04':'Has numbers divided by slash'
+                   'Inf_04':'Has numbers divided by slash',
+                   'Inf_10':'Queens address'
                    }
 
     @staticmethod
@@ -200,6 +216,32 @@ class AddrParser:
             pieces.append(AddrParser.Token('Inf_04', typ='flag'))
 
         return pieces
+    
+    def non_address_checks(self, pieces: list) -> list:
+        '''
+        This function does basic checks to see if there is a problem city/postal
+        code at this address. For instance, it throws an information flag if it
+        is a Queens address
+
+        Parameters
+        ----------
+        pieces : list
+            The token list making up the current address to be processed, now with
+            information and error flags in case an initial check was activated.
+
+        Returns
+        -------
+        list
+            DESCRIPTION.
+
+        '''
+        if self.postal in self.queens_zips:
+            pieces.append(AddrParser.Token('Inf_10', typ='flag'))
+        elif self.city == 'queens':
+            pieces.append(AddrParser.Token('Inf_10', typ='flag'))
+            
+        return pieces
+        
 
     @staticmethod
     def remove_consecutive_delims(pieces: list) ->list:
