@@ -41,11 +41,12 @@ class CREDA_Project():
 
         if not os.path.exists(run_dir):
             os.mkdir(run_dir)
-        for folder in ['addresses_in', 'addresses_out', 'logs', 'final_results', 'geocoded_in', 'piercing_results', 'shapefiles', 'temp_files']:
+        for folder in ['addresses_in', 'addresses_out', 'logs', 'final_results',
+                       'geocoded_in', 'piercing_results', 'shapefiles', 'temp_files']:
             os.makedirs(run_dir / folder, exist_ok=True)
-        
+
         print(f'Run {name} created.')
-        
+
         os.chdir(run_dir)
         print(f'Changing working directory to {run_dir}')
 
@@ -86,13 +87,6 @@ class CREDA_Project():
                 print('\n')
         else:
             print('No sources added yet')
-        '''
-        print('-Add a source with function add_data_source(source_name, file)')
-        print('-Add a geocoder to a source with function add_geocoder(source_name, geocoder)')
-        print('Possible geocoders include "ArcGIS", "Lightbox", "GAPI", etc.')
-        print('Or give it a different name and it will look for that file')
-        '''
-        print("\n***Start run with the address_parse function***")
 
 
     def add_data_source(self, source_name: str, source_file: str):
@@ -208,7 +202,9 @@ class CREDA_Project():
             address_lines = pd.merge(address_lines, temp, how='inner', on='TempID')
             #outfile = f'{self.run_name}\\addresses_out\\{source}.csv'
             outfile = Path.cwd() / 'addresses_out' / f'{source}.csv'
-            address_lines = address_lines[['TempID', 'TempIDZ', 'addr', 'single_address', 'city', 'state', 'zip', 'parsed_addr', 'flags']]
+            address_lines = address_lines[['TempID', 'TempIDZ', 'addr',
+                                           'single_address', 'city', 'state',
+                                           'zip', 'parsed_addr', 'flags']]
             address_lines.set_index('TempIDZ', inplace=True)
             address_lines.to_csv(outfile, index=False)
             self.parsed_addresses.append(address_lines)
@@ -232,15 +228,17 @@ class CREDA_Project():
         validator_factory = validators.ValidatorFactory()
 
         for source, geocoders in self.source_analyses.items():
-            
+
             geocoded_addrs = self.parsed_addresses[self.address_index[source]]
-            
+
             for geocoder in geocoders:
 
                 geocode_file = Path.cwd() / "geocoded_in" / f'{source}_{geocoder}.csv'
-                temp_validator = validator_factory.create_validator(geocoder, geocoded_addrs, geocode_file)
+                temp_validator = validator_factory.create_validator(
+                    geocoder, geocoded_addrs, geocode_file)
                 validated_df = temp_validator.get_validator_matches()
-                geocoded_addrs = pd.merge(geocoded_addrs, validated_df, left_index=True, right_index=True, how='left')
+                geocoded_addrs = pd.merge(geocoded_addrs, validated_df,
+                                          left_index=True, right_index=True, how='left')
                 print(f'Added on {geocoder} geocoding to source {source}')
 
             self.parsed_addresses[self.address_index[source]] = geocoded_addrs
@@ -265,13 +263,13 @@ class CREDA_Project():
             temp_shapefile = Path.cwd() / "shapefiles" / temp_shapefile
         print(temp_shapefile)
         self.shapes = SHP.ShapesList(temp_shapefile)
-
         for source, geocoders in self.source_analyses.items():
             geocoded_addrs = self.parsed_addresses[self.address_index[source]]
 
             for geocoder in geocoders:
                 temp_pierced = self.shapes.process_df(geocoded_addrs, geocoder, offset=0.0005)
-                geocoded_addrs = pd.merge(geocoded_addrs, temp_pierced, how='left', left_index=True, right_index=True)
+                geocoded_addrs = pd.merge(geocoded_addrs, temp_pierced, how='left',
+                                          left_index=True, right_index=True)
             #geocoded_addrs.to_csv(f'{self.run_name}\\piercing_results\\{source}.csv')
             geocoded_addrs.to_csv(Path.cwd() / 'piercing_results' / f'{source}.csv')
             self.parsed_addresses[self.address_index[source]] = geocoded_addrs
@@ -291,13 +289,12 @@ class CREDA_Project():
             #print(f'geocoders are {geocoders}')
             addresses_with_pierced = self.parsed_addresses[self.address_index[source]]
             best_rows = []
-            for idx, row in addresses_with_pierced.iterrows():
+            for row in addresses_with_pierced.iterrows():
                 #print(row)
                 found = False
                 best_geocoder = ""
                 best_geocoder_score = 0
                 for geocoder in geocoders:
-                    #print(f'geocoder is {geocoder}')
                     if row[f'{geocoder}_status'] == 'Pierced':
                         if row[f'{geocoder}_confidence'] > best_geocoder_score:
                             best_geocoder = geocoder
@@ -317,12 +314,12 @@ class CREDA_Project():
                     best_rows.append(row)
             temp_df = pd.concat(best_rows, axis=1)
             temp_df = temp_df.T
-            
+
             temp_df = self.add_shapes(temp_df)
-            
+
             temp_df.to_csv(Path.cwd() / 'final_results' / f'{source}_results.csv')
             self.parsed_addresses[self.address_index[source]] = temp_df
-            
+
     def add_shapes(self, temp_df):
         '''
         Takes completed output from the piercing and adds back in WKT on the best
@@ -338,26 +335,39 @@ class CREDA_Project():
         None.
 
         '''
-        
+
         # TODO fix for multiple pierced shapes case
         temp_df['best_geocoder_id'] = temp_df['best_geocoder_id'].map(lambda x: x[0])
-        temp_df = pd.merge(temp_df, self.shapes.shape_df, left_on='best_geocoder_id', right_on='shapeID')
+        temp_df = pd.merge(temp_df, self.shapes.shape_df,
+                           left_on='best_geocoder_id', right_on='shapeID')
         return temp_df
-    
-    def convert_to_UBIDs(self):
-        
-        for source, geocoders in self.source_analyses.items():
-            
+
+    def ConvertToUBIDs(self):
+        '''
+        This function goes through each source and geocoder and converts the current
+        Geometry from WKT to UBIDs
+
+        Returns
+        -------
+        None.
+
+        '''
+        #for source, geocoders in self.source_analyses.items():
+        for source in self.source_analyses.keys():
+
             temp_dict = {}
             df = self.parsed_addresses[self.address_index[source]]
             for idx, row in df.iterrows():
-                #row['UBID'] = df.apply(lambda x: bc.encode(latitudeLo = df['miny'], longitudeLo = df['minx'], latitudeHi = df['maxy'], longitudeHi = df['maxx'], latitudeCenter = df['centery'], longitudeCenter= df['centerx'], codeLength = 16))
-                UBID = bc.encode(latitudeLo=row['miny'], longitudeLo=row['minx'], latitudeHi=row['maxy'], longitudeHi=row['maxx'], latitudeCenter=row['centery'], longitudeCenter=row['centerx'], codeLength=16)
+                UBID = bc.encode(latitudeLo=row['miny'],
+                                 longitudeLo=row['minx'],
+                                 latitudeHi=row['maxy'],
+                                 longitudeHi=row['maxx'],
+                                 latitudeCenter=row['centery'],
+                                 longitudeCenter=row['centerx'],
+                                 codeLength=16)
                 temp_dict[idx] = UBID
-            
+
             UBID_df = pd.DataFrame.from_dict(temp_dict, orient='index')
             UBID_df.columns = ['UBID']
-            #UBID_df.set_index('TempIDZ')
-            print(UBID_df)
-            
+
             self.parsed_addresses[self.address_index[source]] = pd.merge(df, UBID_df, how='left', left_index=True, right_index=True)
