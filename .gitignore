@@ -5,3 +5,5 @@ __pycache__/
 =======
 **/__pycache__
 >>>>>>> 732fb7f1e742acc4b10fa35c857146da275e4bc7
+/.pylint.d/
+/.pylint.d/helper.stats
