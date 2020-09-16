@@ -19,7 +19,10 @@ import buildingid.code as bc
 
 class CREDA_Project():
     '''This class acts as an easy pipeline tool to simplify CREDA analyses'''
-    supported_analyses = ['ArcGIS', 'Lightbox', 'GAPI', 'Census']
+    supported_analyses = {'ArcGIS':'Supports infiles from Geocoded results',
+                          'Lightbox':'Supports infiles from Geocoded results',
+                          'GAPI':'Supports realtime runs',
+                          'Census':'Supports realtime runs'}
 
     def __init__(self, name: str):
         '''
@@ -79,7 +82,7 @@ class CREDA_Project():
                     for analysis in analyses:
                         print(f'\t{analysis}', end="")
                         if analysis in self.supported_analyses:
-                            print(" - supported")
+                            print(f' - {self.supported_analyses[analysis]}')
                         else:
                             print(" - custom")
                 else:
@@ -176,6 +179,7 @@ class CREDA_Project():
 
         '''
         for source, address_file in self.sources.items():
+            print(f'Starting address cleaning on {source}')
             address_lines = pd.read_csv(address_file)
             address_lines.reset_index(inplace=True)
             address_lines.rename(columns={'index':'TempID'}, inplace=True)
@@ -196,7 +200,6 @@ class CREDA_Project():
                       "For instance, run_addresses(address_field='addresses'")
 
                 return None
-            print(address_lines.columns)
             address_lines['addr'] = address_lines['addr'].str.lower()
             address_lines['parsed_addr'] = address_lines['addr']
             address_lines['flags'] = ""
@@ -221,6 +224,7 @@ class CREDA_Project():
             address_lines.to_csv(outfile, index=False)
             self.parsed_addresses.append(address_lines)
             self.address_index[source] = len(self.parsed_addresses) - 1
+            print('Completed analysis\n')
         return None
 
 
@@ -240,7 +244,7 @@ class CREDA_Project():
         validator_factory = validators.ValidatorFactory()
 
         for source, geocoders in self.source_analyses.items():
-
+            print(f'Starting geocoding on {source}')
             geocoded_addrs = self.parsed_addresses[self.address_index[source]]
 
             for geocoder in geocoders:
@@ -251,9 +255,10 @@ class CREDA_Project():
                 validated_df = temp_validator.get_validator_matches()
                 geocoded_addrs = pd.merge(geocoded_addrs, validated_df,
                                           left_index=True, right_index=True, how='left')
-                print(f'Added on {geocoder} geocoding to source {source}')
+                print(f'-Added on {geocoder} geocoding to source {source}')
 
             self.parsed_addresses[self.address_index[source]] = geocoded_addrs
+            print(f'Completed geocoding for source {source}')
 
     def perform_piercing(self, shapefile: str):
         '''
@@ -273,9 +278,10 @@ class CREDA_Project():
         temp_shapefile = Path(shapefile)
         if not temp_shapefile.is_absolute():
             temp_shapefile = Path.cwd() / "shapefiles" / temp_shapefile
-        print(temp_shapefile)
+        print(f'Using {temp_shapefile} for parcel piercing')
         self.shapes = SHP.ShapesList(temp_shapefile)
         for source, geocoders in self.source_analyses.items():
+            print(f'Starting address piercing on {source}')
             geocoded_addrs = self.parsed_addresses[self.address_index[source]]
 
             for geocoder in geocoders:
@@ -298,11 +304,10 @@ class CREDA_Project():
 
         '''
         for source, geocoders in self.source_analyses.items():
-            #print(f'geocoders are {geocoders}')
+            print(f'Starting best match selection on {source}')
             addresses_with_pierced = self.parsed_addresses[self.address_index[source]]
             best_rows = []
             for _, row in addresses_with_pierced.iterrows():
-                #print(row)
                 found = False
                 best_geocoder = ""
                 best_geocoder_score = 0
@@ -366,7 +371,7 @@ class CREDA_Project():
         '''
         #for source, geocoders in self.source_analyses.items():
         for source in self.source_analyses.keys():
-
+            print(f'Converting {source} to UBIDs')
             temp_dict = {}
             df = self.parsed_addresses[self.address_index[source]]
             for idx, row in df.iterrows():
@@ -425,8 +430,12 @@ class CREDA_Project():
     def join_output(self, threshold: int = 0.65):
         
         if len(self.parsed_addresses) > 1:
+            
+            sources = list(self.source_analyses.keys())
+            
             merged = self.parsed_addresses[0]
-            for completed_df in self.parsed_addresses[1:]:
+            for index, completed_df in enumerate(self.parsed_addresses[1:]):
+                print(f'Adding data from {sources[index+1]} to {sources[0]}')
                 completed_df = self.jaccard_join(completed_df, merged, threshold)
                 merged = pd.merge(merged, completed_df, how="inner", left_on='TempIDZ', right_on='matchIDZ')
         

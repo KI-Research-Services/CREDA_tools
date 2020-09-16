@@ -36,7 +36,7 @@ class CensusValidator(validators.AddressValidator):
         start = 0
         end = increment = 900
         while end < to_process.shape[0]:
-            print(f'Sending from {start} to {end-1}')
+            print(f'Sending from {start} to {end-1} to Census')
             temp = to_process[start:end]
             temp.to_csv(self.temp_file, header=False)
             result = cg.addressbatch(self.temp_file)
@@ -48,7 +48,7 @@ class CensusValidator(validators.AddressValidator):
             start = end
             end = end + increment
             time.sleep(10)
-        print(f'Sending from {start} to {end-1}')
+        print(f'Sending from {start} to {to_process.shape[0]} to Census')
         temp = to_process[start:end]
         temp.to_csv(self.temp_file, header=False)
         result = cg.addressbatch(f'temp_files/{self.temp_file.name}')
