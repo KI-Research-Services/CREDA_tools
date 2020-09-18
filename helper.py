@@ -17,6 +17,30 @@ from CREDA_tools.geocoding import validators
 import CREDA_tools.shapes.shapes as SHP
 import buildingid.code as bc
 
+
+def simple_max(row, geocoders):
+        found = False
+        best_geocoder = ""
+        best_geocoder_score = 0
+        for geocoder in geocoders:
+            if row[f'{geocoder}_status'] == 'Pierced':
+                if row[f'{geocoder}_confidence'] > best_geocoder_score:
+                    best_geocoder = geocoder
+                    best_geocoder_score = row[f'{geocoder}_confidence']
+                    found = True
+                else:
+                    pass
+                    #print(row[f'{geocoder}_confidence'], end=" ")
+                    #print(f'vs {best_geocoder_score}')
+            else:
+                pass
+                #print(row[f'{geocoder}_status'])
+
+        if found:
+            row['best_geocoder'] = best_geocoder
+            row['best_geocoder_id'] = row[f'{best_geocoder}_pierced_ids']
+            return row
+
 class CREDA_Project():
     '''This class acts as an easy pipeline tool to simplify CREDA analyses'''
     supported_analyses = {'ArcGIS':'Supports infiles from Geocoded results',
@@ -292,7 +316,9 @@ class CREDA_Project():
             geocoded_addrs.to_csv(Path.cwd() / 'piercing_results' / f'{source}.csv')
             self.parsed_addresses[self.address_index[source]] = geocoded_addrs
 
-    def select_best_match(self):
+    
+
+    def select_best_match(self, func):
         '''
         For each address this selects the best match based on pure confidence
         scores. It saves the new dataframe to the project object and a copy to
@@ -308,27 +334,7 @@ class CREDA_Project():
             addresses_with_pierced = self.parsed_addresses[self.address_index[source]]
             best_rows = []
             for _, row in addresses_with_pierced.iterrows():
-                found = False
-                best_geocoder = ""
-                best_geocoder_score = 0
-                for geocoder in geocoders:
-                    if row[f'{geocoder}_status'] == 'Pierced':
-                        if row[f'{geocoder}_confidence'] > best_geocoder_score:
-                            best_geocoder = geocoder
-                            best_geocoder_score = row[f'{geocoder}_confidence']
-                            found = True
-                        else:
-                            pass
-                            #print(row[f'{geocoder}_confidence'], end=" ")
-                            #print(f'vs {best_geocoder_score}')
-                    else:
-                        pass
-                        #print(row[f'{geocoder}_status'])
-
-                if found:
-                    row['best_geocoder'] = best_geocoder
-                    row['best_geocoder_id'] = row[f'{best_geocoder}_pierced_ids']
-                    best_rows.append(row)
+                best_rows.append(func(row, geocoders))
             temp_df = pd.concat(best_rows, axis=1)
             temp_df = temp_df.T
 
