@@ -10,6 +10,8 @@ from shapely.geometry import Point#, Polygon
 from shapely.geos import WKTReadingError #Needed for new error
 import shapely.wkt
 
+import buildingid.code as bc
+
 class ShapesList():
     
     def __init__(self, file):
@@ -22,19 +24,26 @@ class ShapesList():
         #For each shape, change to polygon, and get min/max coords. Append to list of dictionaries
         for idx, item in shape_frame.iterrows():
             try:
-                #print(idx)
                 polygon = shapely.wkt.loads(item.GEOM)
                 minx, miny, maxx, maxy = polygon.bounds
                 centerx, centery = (polygon.centroid.coords)[0]
+                UBID = bc.encode(latitudeLo=miny,
+                                 longitudeLo=minx,
+                                 latitudeHi=maxy,
+                                 longitudeHi=maxx,
+                                 latitudeCenter=centery,
+                                 longitudeCenter=centerx,
+                                 codeLength=16)
                 shapes.append({'shapeID':idx, 'polygon':item.GEOM,
                                'minx':minx, 'maxx':maxx, 'miny': miny, 'maxy':maxy,
-                               'centerx':centerx, 'centery':centery})
+                               'centerx':centerx, 'centery':centery, 'UBID': UBID})
             except WKTReadingError:
                 self.failed_shapes.append(idx)
         
         #Create dataframe for shapes, this time with min/max
         #We can probably do this with a .apply() method, but the above loop was clear enough.
         self.shape_df = pd.DataFrame.from_dict(shapes)
+        self.shape_df.set_index('shapeID', inplace=True)
         
     def process_df(self,complete_df:pd.DataFrame, validator:str, offset:float = 0):
         print(f'Processing for {validator}')
@@ -51,26 +60,19 @@ class ShapesList():
                            (self.shape_df.miny - offset < item.lat) &
                            (self.shape_df.maxy + offset > item.lat)]
 
-            for i, shape in filtered_shapes.iterrows():
+            for shapeID, shape in filtered_shapes.iterrows():
                 polygon = shapely.wkt.loads(shape.polygon)
                 if point.within(polygon): #If it pierces the shape, add to the pierced list
-                    #print("Pierced")
-                    if shape.shapeID not in pierced:
-                        pierced.append(shape.shapeID)
+                    if shapeID not in pierced:
+                        pierced.append(shapeID)
                 else: #otherwise add it to the bounded list
-                    #print("Bounded")
-                    if shape.shapeID not in bounded_xy:
-                        bounded_xy.append(shape.shapeID)
-                #print(f'Pierced shapes are {pierced}')
-                #print(f'Bounded shapes are {bounded_xy}')
+                    if shapeID not in bounded_xy:
+                        bounded_xy.append(shapeID)
             #Not false positive or pierced
             if (len(pierced) == 0) and (filtered_shapes.shape[0]>0):
                 nearest = nearest_neighbor(point, filtered_shapes)
-                #print(f'Nearest is {nearest}')
                 pierced.append(nearest)
                 bounded_xy.remove(nearest)
-            
-                
             #Get counds of each list
             pierced_count = len(pierced)
                 
@@ -79,12 +81,11 @@ class ShapesList():
                 status = "Pierced" if (pierced_count==1) else "Pierced_Multiple"
             else:
                 status = "Not Found"
-            #print(f'Item {item}')
             results.append({'TempIDZ':idx, f'{validator}_status':status,
-                                f'{validator}_pierced_ids':pierced})
+                                f'{validator}_pierced_ShapeIDs':pierced})
             count+=1
         to_return = pd.DataFrame.from_dict(results)
-        to_return.set_index('TempIDZ')
+        to_return.set_index('TempIDZ', inplace=True)
         to_return.index = to_return.index.astype(int)
         return(to_return)
 
@@ -97,14 +98,14 @@ class ShapesList():
 def nearest_neighbor(point, filtered_df):
     nearest_name = None
     nearest_distance = None
-    for index, row in filtered_df.iterrows():
+    for shapeID, row in filtered_df.iterrows():
         temp_shape = shapely.wkt.loads(row.polygon)
         temp_dist = point.distance(temp_shape)
         if nearest_name is None:
-            nearest_name = row.shapeID
+            nearest_name = shapeID
             nearest_distance = temp_dist
         elif temp_dist < nearest_distance:
-            nearest_name = row.shapeID
+            nearest_name = shapeID
             nearest_distance = temp_dist
     return nearest_name     
 
