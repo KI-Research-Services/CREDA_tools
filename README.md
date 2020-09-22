@@ -95,10 +95,13 @@ The code below uses the default simple_max() function to choose the optimal matc
 ```
 project.pick_best_match()
 ```
+#### UBID generation
 Addresses should now be matched to the ShapeIDs from the Shapefile. As parcel shapes and property boundaries may change over time, we recommend a final switch to DOE UBIDs for the highest-confidence unique identifier for a property. This also allows for efficient joining with other data sets with UBID property values via Jaccard index.
 ```
 project.generate_UBIDs()
 ```
+
+#### Adding additional datasets
 To combine multiple datasets, this process can be completed on another file, followed by a jaccard score match. For example:
 ```
 project2 = helper.CREDA_Project("test_data\\san_jose_d2.csv")
