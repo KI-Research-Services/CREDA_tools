@@ -144,20 +144,24 @@ class CREDA_Project:
         self.UBIDs = temp[['UBID']]
         
     def jaccard_combine(self, other):
-        df1 = pd.merge(self.data_lines, self.UBIDs, how='inner', left_index=True, right_index=True)
-        df2 = pd.merge(other.data_lines, other.UBIDs, how='inner', left_index=True, right_index=True)
-        
         df1_matches = []
+        df1_rows = []
         
-        for _, row_1 in df1.iterrows():
+        for IDZ_1, row_1 in self.UBIDs.iterrows():
             ubid_1 = bc.decode(row_1['UBID'])
-            for _, row_2 in df2.iterrows():
+            for IDZ_2, row_2 in other.UBIDs.iterrows():
                 ubid_2 = bc.decode(row_2['UBID'])
                 score = ubid_1.jaccard(ubid_2)
                 if score:
-                    if(score > self.config['Jaccard']['threshold']):
+                    if(score > float(self.config['Jaccard']['threshold'])):
                         df1_rows.append(row_1)
-                        df1_matches.append(row_2['TempIDZ'])
+                        df1_matches.append(IDZ_2)
         results = pd.DataFrame(df1_rows)
-        results['matchIDZ'] = df1_matches
+        results['MatchIDZ'] = df1_matches
+        results.index.rename('TempIDZ', inplace=True)
+        results.reset_index()
+        
+        results = pd.merge(results, self.data_lines, how='left', left_on='TempIDZ', right_index=True)
+        results = pd.merge(results, other.data_lines, how='left', left_on='MatchIDZ', right_index=True)
+        
         return results
