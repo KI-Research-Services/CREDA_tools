@@ -47,41 +47,70 @@ Give an example
 ```
 -->
 
+### CREDA_Project Objects
+Analysis with CREDA Tools revolves around the CREDA_Project object. This is passed a file at initialization, and can then be taken through several different analysis steps ending in creation of UBIDs for each address. After multiple CREDA_Project objects have been prepared, one for each data source, they can be combined with functions such as our jaccard_combine() to generate joined datasets.
+
 ### Basic Usage
-Once you have a root folder with CREDA_tools inside it, basic use of CREDA_tools is simple. For scripts within the root folder, you can begin a new project with the helper module. Import helper, and then instatiate a new CREDA_Project module with the project title.
+#### Instantiation
+Once you have a root folder with CREDA_tools inside it, we can start processing a file of addresses with data. First we instantiate a CREDA_Project object with a data file. Sample files have been provided (/test_data) to show the pipeline.
 ```
 from CREDA_tools import helper
 
-project = helper.CREDA_Project("test_run")
+project = helper.CREDA_Project("/CREDA_tools/test_data/san_jose_d1.csv")
 ```
 
-The above code creates a test_run folder, with several subfolders for the analysis. You may then copy csv data files, at least with address field 'addr', into the addresses_in subfolder of your project. Now we can add add these sources as well as analysis steps. Below, we provide sample code for using the San Jose sample dataset (found in CREDA_tools/test_data/san_jose_sample.csv), as well as adding two geocoders to process it once the addresses are clean. The source data for this is freely available from San Jose's city website. The US Census geocoder is freely available. The GAPI geocoder requires setup, but typically provides a free allotment to users after registration.
+#### Clean Addresses
+Now that we have an analysis object, we can clean the addresses.
 ```
-project.add_data_source("san_jose_1", "san_jose_d1.csv")
-project.add_data_source("san_jose_2", "san_jose_d2.csv")
-project.add_geocoder("san_jose_1", "Census")
-project.add_geocoder("san_jose_2", "Census")
-```
-CREDA_tools support a number of common geocoders, running some within the pipeline and other incorporating their output. Available geocoders can be found at (PLACEHOLDER). We do not provide licenses or API tokens to access these resources.
-
-Once an analysis pipeline has been setup, you can begin the current run with the run_addresses() function. This will produce cleaned address, with expanded ranges (1-7 main street converted to 1 main street, 3 main street... 7 main street). Output will be saved to the addresses_out subfolder. These can then be run through geocoders.
-```
-project.run_addresses()
-```
-
-Geocoder results can now be added into our dataset, parcel piercing performed, and best match among geocoders selected based on confidence scores. Piercing step will require a shapefile of eligible parcels.
+project.clean_addresses()
 
 ```
-project.add_geocoder_results()
-project.perform_piercing("san_jose_shapes.csv")
-project.select_best_match()
+The following above code creates two objects with our CREDA_File object, a parsed_addresses object matching original addresses to parsed addresses, and an address_errors object which tracks issues and errors in the parsing. If we want a report of address parsing errors, we can produce a file summarizing these with
+```
+project.addr_parse_report(outfile)
 ```
 
-To provide a more robust unique key for properties, we recommend a final switch to UBIDs for the highest-confidence shape. If the project has multiple sources, properties between sets can be joined through a Jaccard index calculation. This allows combination of, for instance, permitting and pricing information on properties even when addresses have errors or change over time.
-
+#### Geocoding
+CREDA_tools supports two main methods of Geocoding. First, some Geocoders can be called in real time from within CREDA_tools. The code below runs Census geocoding on our processed addresses, creating a geocoding object with Census_lat, Census_long, and Census_confidence fields.API
 ```
-project.convert_to_UBIDs()
-project.join_datasets()
+project.run_geocoding('Census')
+```
+A second method is to export a file to be run externally in Geocoders, and then add the geocoded results back in when they are finished. This can be accomplished through
+```
+project.make_geocoder_file(outfile) #This creates a file with TempIDZ and cleaned address for geocoding
+# Run Geocoding in other program
+project.add_geocoder_results(geocoder, infile)
+```
+Available geocoders can be found at (PLACEHOLDER). We do not provide licenses or API tokens to access these resources.
+
+#### Parcel Piercing
+All Geocoding steps provide a latitude/longitude for each address being analyzed. Given a shapefile for parcels over the same geographic area as a set of addresses, we can then perform a parcel piercing step to determine which geometries are 'pierced' by a lat/long. This includes a nearest neighbor parsing algorithm, so that if the lat/long correspond with a position on the street (e.g. the mailbox rather than the building) there is still a high likelihood of matching the point to the property.
+Parcel piercing is run on thte currently assigned shapefile, so first we assign a shapefile and then run our piercing algorithm.
+```
+project.assign_shapefile("/CREDA_tools/test_data/san_jose_shapes.csv")
+project.perform_piercing()
+```
+Geocoders often produce differing results, leading to different parcels pierced by lat/long coordinates. The CREDA_tools function pick_best_match() goes through each row of your piercing results where there is disagreement and can analyze them to select the optimal piercing. The function pick_best_match() by default uses a simple_max algorithm, which chooses the piercing with the highest confidence score based on the geocoder output. That being said, it is likely that among your available geocoders some will excel in other geographies while others are preferable another set. CREDA_tools provides a 'config.ini' that can adjust the confidence values generated from the geocoders to help solve this. The best selection for your dataset may require a custom scorer. For this reason, pick_best_match() accepts a function as input to allow for a custom picking algorithm to be run on each row.
+The code below uses the default simple_max() function to choose the optimal matches.
+```
+project.pick_best_match()
+```
+Addresses should now be matched to the ShapeIDs from the Shapefile. As parcel shapes and property boundaries may change over time, we recommend a final switch to DOE UBIDs for the highest-confidence unique identifier for a property. This also allows for efficient joining with other data sets with UBID property values via Jaccard index.
+```
+project.generate_UBIDs()
+```
+To combine multiple datasets, this process can be completed on another file, followed by a jaccard score match. For example:
+```
+project2 = helper.CREDA_Project("test_data\\san_jose_d2.csv")
+project2.clean_addresses()
+
+project2.run_geocoding('Census')
+project2.assign_shapefile("test_data\\san_jose_shapes.csv")
+project2.perform_piercing()
+project2.pick_best_match()
+project2.generate_UBIDs()
+
+temp = project.jaccard_combine(project2)
 ```
 
 ## Contributing
