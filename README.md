@@ -12,13 +12,13 @@ These instructions will get you a copy of the project up and running on your loc
 
 ### Prerequisites
 
-CREDA_tools is built in Python, so a Python installation will be needed. Basic CREDA_tools has fairly lightweight requirements, using only the following basic data science libraries:
+CREDA_tools is built in Python, so a Python installation will be needed. Basic CREDA_tools has fairly lightweight requirements, but will require a few extra libraries depending on functions used. Requirements include:
 
 * Numpy
 * Pandas
 * Shapely
-
-Many Python distributions include these as standard, but otherwise all can be installed via pip, such as in 'pip install numpy'. Advanced CREDA_tools modules, such as those that allow for geocoding within the pipeline, often require specialized libraries, such as the googlemaps library to use GAPI.
+* buildingid from the Department of Energy. Instructions for this installation can be found at [their GitHub Repository](https://github.com/pnnl/buildingid-py).
+* censusgeocode is needed to use the Census Geocoder. Run with 'pip install censusgeocode'
 
 ### Installing
 
@@ -60,7 +60,7 @@ project = helper.CREDA_Project("/CREDA_tools/test_data/san_jose_d1.csv")
 ```
 
 #### Clean Addresses
-Now that we have an analysis object, we can clean the addresses.
+Now that we have an analysis object, we can clean the addresses. Our example files mimic the correct file format, with columss 'addr', 'city', 'postal', and 'state', as well as any data columns.
 ```
 project.clean_addresses()
 
@@ -75,11 +75,12 @@ CREDA_tools supports two main methods of Geocoding. First, some Geocoders can be
 ```
 project.run_geocoding('Census')
 ```
-A second method is to export a file to be run externally in Geocoders, and then add the geocoded results back in when they are finished. This can be accomplished through
+A second method is to export a file to be run externally in Geocoders, and then add the geocoded results back in when they are finished. We expect 3 columns including a 'lat', 'long', and 'confidence'.
+This can be accomplished through the following code
 ```
 project.make_geocoder_file(outfile) #This creates a file with TempIDZ and cleaned address for geocoding
 # Run Geocoding in other program
-project.add_geocoder_results(geocoder, infile)
+project.add_geocoder_results(geocoder, infile) # This will fail if infile doesn't contain lat, long, and confidence scores
 ```
 Available geocoders can be found at (PLACEHOLDER). We do not provide licenses or API tokens to access these resources.
 

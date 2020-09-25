@@ -1,76 +1,76 @@
-addr,city,zip,state
-1620 Zanker Rd,San Jose,95112,CA
-1419-1423 Sierra Creek Way,San Jose,95132,CA
-2022 Bering Dr,San Jose,95131,CA
-2028 Bering Dr,San Jose,95131,CA
-2032 Bering Dr,San Jose,95131,CA
-1408 Stone Creek Dr,San Jose,95132,CA
-3081 Chippenham Dr,San Jose,95132,CA
-3077 Chippenham Dr,San Jose,95132,CA
-655 669 667 Commercial St,San Jose,95112,CA
-1177 N 15th St,San Jose,95112,CA
-1201 N 15th St,San Jose,95112,CA
-1277 N 15th St,San Jose,95112,CA
-1136 Old Bayshore Hwy,San Jose,95112,CA
-1195 N 13th St,San Jose,95112,CA
-1164 Old Bayshore Hwy,San Jose,95112,CA
-2982-2996 Knights Bridge Rd,San Jose,95132,CA
-816 Cape Trinity Pl,San Jose,95133,CA
-1150 Old Bayshore Hwy,San Jose,95112,CA
-660-672 Commercial St,San Jose,95112,CA
-2144 O'Toole Ave,San Jose,95131,CA
-2150 O'Toole Ave,San Jose,95131,CA
-1509 Queens Crossing Dr,San Jose,95132,CA
-790 Montague Expy,San Jose,95131,CA
-1543 Scaraway Dr,San Jose,95132,CA
-1537 Scaraway Dr,San Jose,95132,CA
-150 Charcot Ave,San Jose,95131,CA
-271 & 275 & 279 E Brokaw Rd,San Jose,95131,CA
-836 Cape Trinity Pl,San Jose,95133,CA
-846 Cape Trinity Pl,San Jose,95133,CA
-1503 Scaraway Dr,San Jose,95132,CA
-1622 Remuda Ln,San Jose,95112,CA
-1624 Remuda Ln,San Jose,95112,CA
-1791 Queenstown Dr,San Jose,95132,CA
-1939 Ensign Way,San Jose,95133,CA
-848 E Gish Rd,San Jose,95112,CA
-1371 Oakland Rd,San Jose,95112,CA
-1920 Navy Pl,San Jose,95133,CA
-1938 Navy Pl,San Jose,95133,CA
-1439 Mardan Dr,San Jose,95132,CA
-1435 Mardan Dr,San Jose,95132,CA
-"1359, 1353, 1341, and 1333 Oakland Rd",San Jose,95112,CA
-1192 Creston Ln,San Jose,95122,CA
-1194 Creston Ln,San Jose,95122,CA
-5074 Nerissa Way,San Jose,95124,CA
-"2350, 2280, 2284, 2260, 2240 Paragon Dr",San Jose,95131,CA
-375 Caribe Way,San Jose,95133,CA
-5124 Kozo Pl,San Jose,95124,CA
-5119 Kozo Ct,San Jose,95124,CA
-5121 Kozo Ct,San Jose,95124,CA
-2320 Kruse Dr,San Jose,95131,CA
-2311 Kruse Dr,San Jose,95131,CA
-675 Brennan St,San Jose,95131,CA
-631 Brennan St,San Jose,95131,CA
-641 Brennan St,San Jose,95131,CA
-4917 Kenlar Dr,San Jose,95124,CA
-1412 Crucero Ct,San Jose,95122,CA
-1416 Crucero Ct,San Jose,95122,CA
-4929 Kenlar Dr,San Jose,95124,CA
-1964 Rosswood Dr,San Jose,95124,CA
-1859 Messina Dr,San Jose,95132,CA
-1851 Messina Dr,San Jose,95132,CA
-650 Brennan St,San Jose,95131,CA
-2175 Kruse Dr,San Jose,95131,CA
-1956-1962 Rosswood Dr,San Jose,95124,CA
-1178 Winslow Dr,San Jose,95122,CA
-1182 Winslow Dr,San Jose,95122,CA
-1770 Conrad Ave,San Jose,95124,CA
-1921 Cape Horn Dr,San Jose,95133,CA
-1915 Cape Horn Dr,San Jose,95133,CA
-802 Cape Kennedy Dr,San Jose,95133,CA
-1223 Turtlerock Dr,San Jose,95122,CA
-3170 Mattos Ave,San Jose,95132,CA
-3174 Mattos Ave,San Jose,95132,CA
-3180 Mattos Ave,San Jose,95132,CA
-1182 Turtlerock Dr,San Jose,95122,CA
+addr,city,postal,state,data1
+1620 Zanker Rd,San Jose,95112,CA,2
+1419-1423 Sierra Creek Way,San Jose,95132,CA,10
+2022 Bering Dr,San Jose,95131,CA,9
+2028 Bering Dr,San Jose,95131,CA,5
+2032 Bering Dr,San Jose,95131,CA,2
+1408 Stone Creek Dr,San Jose,95132,CA,9
+3081 Chippenham Dr,San Jose,95132,CA,1
+3077 Chippenham Dr,San Jose,95132,CA,3
+655 669 667 Commercial St,San Jose,95112,CA,4
+1177 N 15th St,San Jose,95112,CA,1
+1201 N 15th St,San Jose,95112,CA,9
+1277 N 15th St,San Jose,95112,CA,6
+1136 Old Bayshore Hwy,San Jose,95112,CA,9
+1195 N 13th St,San Jose,95112,CA,7
+1164 Old Bayshore Hwy,San Jose,95112,CA,7
+2982-2996 Knights Bridge Rd,San Jose,95132,CA,5
+816 Cape Trinity Pl,San Jose,95133,CA,8
+1150 Old Bayshore Hwy,San Jose,95112,CA,6
+660-672 Commercial St,San Jose,95112,CA,10
+2144 O'Toole Ave,San Jose,95131,CA,9
+2150 O'Toole Ave,San Jose,95131,CA,6
+1509 Queens Crossing Dr,San Jose,95132,CA,5
+790 Montague Expy,San Jose,95131,CA,2
+1543 Scaraway Dr,San Jose,95132,CA,2
+1537 Scaraway Dr,San Jose,95132,CA,1
+150 Charcot Ave,San Jose,95131,CA,10
+271 & 275 & 279 E Brokaw Rd,San Jose,95131,CA,6
+836 Cape Trinity Pl,San Jose,95133,CA,2
+846 Cape Trinity Pl,San Jose,95133,CA,2
+1503 Scaraway Dr,San Jose,95132,CA,3
+1622 Remuda Ln,San Jose,95112,CA,3
+1624 Remuda Ln,San Jose,95112,CA,2
+1791 Queenstown Dr,San Jose,95132,CA,10
+1939 Ensign Way,San Jose,95133,CA,3
+848 E Gish Rd,San Jose,95112,CA,3
+1371 Oakland Rd,San Jose,95112,CA,9
+1920 Navy Pl,San Jose,95133,CA,3
+1938 Navy Pl,San Jose,95133,CA,9
+1439 Mardan Dr,San Jose,95132,CA,1
+1435 Mardan Dr,San Jose,95132,CA,4
+"1359, 1353, 1341, and 1333 Oakland Rd",San Jose,95112,CA,8
+1192 Creston Ln,San Jose,95122,CA,8
+1194 Creston Ln,San Jose,95122,CA,4
+5074 Nerissa Way,San Jose,95124,CA,3
+"2350, 2280, 2284, 2260, 2240 Paragon Dr",San Jose,95131,CA,9
+375 Caribe Way,San Jose,95133,CA,1
+5124 Kozo Pl,San Jose,95124,CA,1
+5119 Kozo Ct,San Jose,95124,CA,10
+5121 Kozo Ct,San Jose,95124,CA,8
+2320 Kruse Dr,San Jose,95131,CA,8
+2311 Kruse Dr,San Jose,95131,CA,1
+675 Brennan St,San Jose,95131,CA,1
+631 Brennan St,San Jose,95131,CA,8
+641 Brennan St,San Jose,95131,CA,5
+4917 Kenlar Dr,San Jose,95124,CA,5
+1412 Crucero Ct,San Jose,95122,CA,3
+1416 Crucero Ct,San Jose,95122,CA,1
+4929 Kenlar Dr,San Jose,95124,CA,4
+1964 Rosswood Dr,San Jose,95124,CA,3
+1859 Messina Dr,San Jose,95132,CA,1
+1851 Messina Dr,San Jose,95132,CA,2
+650 Brennan St,San Jose,95131,CA,8
+2175 Kruse Dr,San Jose,95131,CA,3
+1956-1962 Rosswood Dr,San Jose,95124,CA,2
+1178 Winslow Dr,San Jose,95122,CA,1
+1182 Winslow Dr,San Jose,95122,CA,4
+1770 Conrad Ave,San Jose,95124,CA,5
+1921 Cape Horn Dr,San Jose,95133,CA,8
+1915 Cape Horn Dr,San Jose,95133,CA,8
+802 Cape Kennedy Dr,San Jose,95133,CA,10
+1223 Turtlerock Dr,San Jose,95122,CA,5
+3170 Mattos Ave,San Jose,95132,CA,10
+3174 Mattos Ave,San Jose,95132,CA,1
+3180 Mattos Ave,San Jose,95132,CA,5
+1182 Turtlerock Dr,San Jose,95122,CA,5
