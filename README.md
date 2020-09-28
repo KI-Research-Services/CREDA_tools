@@ -57,7 +57,7 @@ Once you have a root folder with CREDA_tools inside it, we can start processing 
 ```
 from CREDA_tools import helper
 
-project = helper.CREDA_Project("/CREDA_tools/test_data/san_jose_d1.csv")
+project = helper.CREDA_Project("CREDA_tools/test_data/san_jose_d1.csv")
 ```
 
 #### Clean Addresses
@@ -76,20 +76,27 @@ CREDA_tools supports two main methods of Geocoding. First, some Geocoders can be
 ```
 project.run_geocoding('Census')
 ```
-A second method is to export a file to be run externally in Geocoders, and then add the geocoded results back in when they are finished. We expect 3 columns including a 'lat', 'long', and 'confidence'.
-This can be accomplished through the following code
+A second method is to export a file to be run externally in Geocoders, and then add the geocoded results back in when they are finished. We expect 3 columns including a 'lat', 'long', and 'confidence', and the analysis will fail without these.
+The command make_geocoder_file() creates a generic file with TempIDZ and address information that many geocoders can use. After sending the generic file to your geocoder of choice, import the results back with the add_geocoder_results() function.
+The add_geocoder_results() function will accept the output of some geocoders natively (e.g. it will parse ArcGIS output as is), but can also accept generic geocoder files, provided they have 1) a TempIDZ field, 2) 'lat' and 'long' fields, and 3) a 'confidence' field.
 ```
 project.make_geocoder_file(outfile) #This creates a file with TempIDZ and cleaned address for geocoding
 # Run Geocoding in other program
 project.add_geocoder_results(geocoder, infile) # This will fail if infile doesn't contain lat, long, and confidence scores
 ```
 Available geocoders can be found at (PLACEHOLDER). We do not provide licenses or API tokens to access these resources.
+After you have added/run all geocoders, you can save the completed geocoding with the save_geocoding command. This takes a filename as input, and has two optional inputs for whether you want the data fields and address fields exported as well.
+```
+project.save_geocoding('some_file.csv')
+# Or you can include optional fields
+project.save_geocoding('some_file.csv', address_fields=True, data_fields_False)
+```
 
 #### Parcel Piercing
 All Geocoding steps provide a latitude/longitude for each address being analyzed. Given a shapefile for parcels over the same geographic area as a set of addresses, we can then perform a parcel piercing step to determine which geometries are 'pierced' by a lat/long. This includes a nearest neighbor parsing algorithm, so that if the lat/long correspond with a position on the street (e.g. the mailbox rather than the building) there is still a high likelihood of matching the point to the property.
 Parcel piercing is run on thte currently assigned shapefile, so first we assign a shapefile and then run our piercing algorithm.
 ```
-project.assign_shapefile("/CREDA_tools/test_data/san_jose_shapes.csv")
+project.assign_shapefile("CREDA_tools/test_data/san_jose_shapes.csv")
 project.perform_piercing()
 ```
 Geocoders often produce differing results, leading to different parcels pierced by lat/long coordinates. The CREDA_tools function pick_best_match() goes through each row of your piercing results where there is disagreement and can analyze them to select the optimal piercing. The function pick_best_match() by default uses a simple_max algorithm, which chooses the piercing with the highest confidence score based on the geocoder output. That being said, it is likely that among your available geocoders some will excel in other geographies while others are preferable another set. CREDA_tools provides a 'config.ini' that can adjust the confidence values generated from the geocoders to help solve this. The best selection for your dataset may require a custom scorer. For this reason, pick_best_match() accepts a function as input to allow for a custom picking algorithm to be run on each row.
@@ -97,10 +104,17 @@ The code below uses the default simple_max() function to choose the optimal matc
 ```
 project.pick_best_match()
 ```
+Note: Although pick_best_match() is trivial when only a single geocoder is used, UBID creation requires a best_matches object generated in the pick_best_matches() step. If this step is omitted, it is automatically run during UBID generation.
 #### UBID generation
 Addresses should now be matched to the ShapeIDs from the Shapefile. As parcel shapes and property boundaries may change over time, we recommend a final switch to DOE UBIDs for the highest-confidence unique identifier for a property. This also allows for efficient joining with other data sets with UBID property values via Jaccard index.
 ```
 project.generate_UBIDs()
+```
+After you have generated UBIDs, you can save the completed UBID results with the save_UBIDs() command. This takes a filename as input, and has two optional inputs for whether you want the data fields and address fields exported as well.
+```
+project.save_UBIDs('some_file.csv')
+# Or you can include optional fields
+project.save_UBIDs('some_file.csv', address_fields=True, data_fields_False)
 ```
 
 #### Adding additional datasets

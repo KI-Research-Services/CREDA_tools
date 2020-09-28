@@ -113,6 +113,22 @@ class CREDA_Project:
         if self.geocoder_results.shape[0] > 0:
             validated_df = pd.merge(self.geocoder_results, validated_df, how='inner', right_index=True, left_index=True)
         self.geocoder_results = validated_df
+        
+    def save_geocoding(self, filename: str, data_fields = False, address_fields = False):
+        if data_fields:
+            if address_fields:
+                temp = pd.merge(self.geocoder_results, self.parsed_addresses, how = 'inner', left_index = True, right_index = True)
+                temp = pd.merge(temp, self.data_lines, how='inner', left_on='TempID', right_index = True)
+            else:
+                temp = pd.merge(self.geocoder_results, self.parsed_addresses[['TempID']], how = 'inner', left_index = True, right_index = True)
+                temp = pd.merge(temp, self.data_lines, how='inner', left_on='TempID', right_index = True)
+        else:
+            if address_fields:
+                temp = pd.merge(self.geocoder_results, self.parsed_addresses, how = 'inner', left_index = True, right_index = True)
+            else:
+                temp = self.geocoder_results
+        temp.to_csv(filename)
+        
 
     def assign_shapefile(self, shapefile: str):
         # TODO check if already have a shapefile. This will replace current shapefile
@@ -150,9 +166,27 @@ class CREDA_Project:
 
     def generate_UBIDs(self):
         # TODO only handles single match case
+        if self.best_matches.shape[0] < 1:
+            self.pick_best_match()
+        
         self.best_matches['best_geocoder_ShapeID'] = self.best_matches['best_geocoder_ShapeID'].apply(lambda x: x[0])
         temp = pd.merge(self.best_matches, self.shapes.shape_df[['UBID']], how='left', left_on='best_geocoder_ShapeID', right_index=True)
         self.UBIDs = temp[['UBID']]
+        
+    def save_UBIDs(self, filename: str, data_fields = False, address_fields = False):
+        if data_fields:
+            if address_fields:
+                temp = pd.merge(self.UBIDs, self.parsed_addresses, how = 'inner', left_index = True, right_index = True)
+                temp = pd.merge(temp, self.data_lines, how='inner', left_on='TempID', right_index = True)
+            else:
+                temp = pd.merge(self.UBIDs, self.parsed_addresses[['TempID']], how = 'inner', left_index = True, right_index = True)
+                temp = pd.merge(temp, self.data_lines, how='inner', left_on='TempID', right_index = True)
+        else:
+            if address_fields:
+                temp = pd.merge(self.UBIDs, self.parsed_addresses, how = 'inner', left_index = True, right_index = True)
+            else:
+                temp = self.UBIDs
+        temp.to_csv(filename)
 
     def jaccard_combine(self, other):
         df1_matches = []
