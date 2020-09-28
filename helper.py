@@ -174,5 +174,8 @@ class CREDA_Project:
 
         results = pd.merge(results, self.data_lines, how='left', left_on='TempIDZ', right_index=True)
         results = pd.merge(results, other.data_lines, how='left', left_on='MatchIDZ', right_index=True)
+        
+        results = pd.merge(results, self.parsed_addresses[['single_address']], how='left', left_on='TempIDZ', right_index=True)
+        results = pd.merge(results, other.parsed_addresses[['single_address']], how='left', left_on='MatchIDZ', right_index=True)
 
         return results
