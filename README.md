@@ -51,6 +51,7 @@ Give an example
 Analysis with CREDA Tools revolves around the CREDA_Project object. This is passed a file at initialization, and can then be taken through several different analysis steps ending in creation of UBIDs for each address. After multiple CREDA_Project objects have been prepared, one for each data source, they can be combined with functions such as our jaccard_combine() to generate joined datasets.
 
 ### Basic Usage
+An explanation of basic functions can be found below. There are also code examples in the sample_code folder.
 #### Instantiation
 Once you have a root folder with CREDA_tools inside it, we can start processing a file of addresses with data. First we instantiate a CREDA_Project object with a data file. Sample files have been provided (/test_data) to show the pipeline.
 ```

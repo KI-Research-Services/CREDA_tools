@@ -24,8 +24,8 @@ project2.make_geocoder_file("for_geocoding2.csv")
 
 #####Run Geocoding on for_geocoding.csv and for_geocoding2.csv#####
 
-project.add_geocoder_results('ArcGIS', 'Arc_output.csv')
-project2.add_geocoder_results('ArcGIS', 'Arc_output2.csv')
+project.add_geocoder_results('ArcGIS', 'CREDA_tools/test_data/Arc_output.csv')
+project2.add_geocoder_results('ArcGIS', 'CREDA_tools/test_data/Arc_output2.csv')
 
 #Run rest of steps to UBIDs on dataset 1
 project.assign_shapefile("test_data\\san_jose_shapes.csv")
