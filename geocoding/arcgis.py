@@ -23,32 +23,20 @@ class ArcGISValidator(validators.AddressValidator):
                   'Locality':0.50
                   }
     
-    def __init__(self, address_df, geocode_file):
-        super().__init__(address_df)
-        self.temp_file = Path.cwd() / "temp_files" / "ArcGIS_temp.csv"
+    def __init__(self, geocode_file):
+        super().__init__()
         self.geocode_file = geocode_file
-        self.process_addresses()
+        self.add_data()
         
-    def process_addresses(self):
+    def add_data(self):
         if os.path.exists(self.geocode_file):
-            print("Path exists")
-            old_run = pd.read_csv(self.geocode_file)
-            old_run.drop_duplicates(inplace=True)
-            print(f'{type(self.address_df)} {type(old_run)}')
-            combined = pd.merge(self.address_df, old_run, how ='left', on=['TempIDZ'])
+            ArcGIS_results = pd.read_csv(self.geocode_file)
+            ArcGIS_results = ArcGIS_results[['USER_TempIDZ', 'Addr_type', 'DisplayX', 'DisplayY']]
+            ArcGIS_results['ArcGIS_confidence'] = 0
+            for key, value in self.score_dict.items():
+                ArcGIS_results.loc[ArcGIS_results['Addr_type'] == key, 'ArcGIS_confidence'] = value
+            ArcGIS_results.rename(columns = {'DisplayY':'ArcGIS_lat', 'DisplayX':'ArcGIS_long', 'USER_TempIDZ': 'TempIDZ'}, inplace=True)
+            ArcGIS_results.set_index('TempIDZ', inplace=True)
+            self.address_df = ArcGIS_results[['ArcGIS_long', 'ArcGIS_lat', 'ArcGIS_confidence']]
         else:
             print(f'Failed to find file {self.geocode_file}')
-        
-        combined['ArcGIS_confidence'] = 0
-        for key, value in self.score_dict.items():
-            combined.loc[combined['Addr_type'] == key, 'ArcGIS_confidence'] = value
-        self.address_df = combined[['TempIDZ','ArcGIS_confidence','DisplayX','DisplayY']]
-        self.address_df.rename(columns = {'DisplayX':'ArcGIS_long',
-                                          'DisplayY':'ArcGIS_lat'}, inplace=True)
-        
-    def run_validator_matches(self, to_process):
-        '''Returns validated, Geocoded addresses for self.address_df, using the ArcGIS tool'''
-        pass
-
-    def get_validator_matches(self):
-        return self.address_df

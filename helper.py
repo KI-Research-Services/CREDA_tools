@@ -16,9 +16,6 @@ from CREDA_tools.address_parsing import addr_splitter
 from CREDA_tools.geocoding import validators
 import CREDA_tools.shapes.shapes as SHP
 
-
-os.chdir("C:\\Users\\fisherd\\Desktop\\projects\\CREDA\\")
-
 def simple_max(row, geocoders):
     found = False
     best_geocoder = ""
@@ -98,13 +95,19 @@ class CREDA_Project:
         temp.drop(columns='TempID').to_csv(outfile)
 
     def add_geocoder_results(self, geocoder: str, filename: str):
-        pass
+        validator_factory = validators.ValidatorFactory()
+        
+        temp_geocoder = validator_factory.create_external_validator(geocoder, filename)
+        validated_df = temp_geocoder.get_validator_matches()
+        if self.geocoder_results.shape[0] > 0:
+            validated_df = pd.merge(self.geocoder_results, validated_df, how='inner', right_index=True, left_index=True)
+        self.geocoder_results = validated_df
 
     def run_geocoding(self, geocoder: str):
         df_to_geocode = pd.merge(self.parsed_addresses, self.orig_addresses[['city', 'postal', 'state']], how='inner', left_on='TempID', right_index=True)
 
         validator_factory = validators.ValidatorFactory()
-        temp_geocoder = validator_factory.create_validator(geocoder, df_to_geocode)
+        temp_geocoder = validator_factory.create_realtime_validator(geocoder, df_to_geocode)
         validated_df = temp_geocoder.get_validator_matches()
 
         if self.geocoder_results.shape[0] > 0:
