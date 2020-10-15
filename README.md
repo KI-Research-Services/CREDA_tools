@@ -24,6 +24,7 @@ CREDA_tools is built in Python, so a Python installation will be needed. Basic C
 
 As this goes public, we would like to transition to a pip install of CREDA_tools as well. In the meantime, we recommend cloning/downloading the repository such that CREDA_tools is a subdirectory in the root folder you wish to run projects in.
 
+NOTE: Besides installation, you will also need a .ini file and a 'temp_files' folder in your working directory. A .ini sample file can be copied out of the CREDA_tools main directory.
 
 
 <!--- ## Running the tests
