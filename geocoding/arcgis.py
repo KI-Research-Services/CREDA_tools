@@ -6,7 +6,6 @@ Created on Mon May 25 22:37:41 2020
 """
 
 import os
-from pathlib import Path
 
 import pandas as pd
 
