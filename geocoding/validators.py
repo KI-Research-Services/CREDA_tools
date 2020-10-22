@@ -5,11 +5,6 @@ Created on Mon Mar  9 13:13:49 2020
 @author: fisherd
 """
 
-import CREDA_tools.geocoding.arcgis as arcgis
-import CREDA_tools.geocoding.census as census
-import CREDA_tools.geocoding.generic as generic
-import CREDA_tools.geocoding.lightbox as lightbox
-
 class AddressValidator(): # pylint: disable=too-few-public-methods
     '''This is the parent object that all Validators inherit from'''
     def __init__(self, address_df=None):
@@ -18,6 +13,11 @@ class AddressValidator(): # pylint: disable=too-few-public-methods
     def get_validator_matches(self):
         '''Generic base method for validator matches'''
         return self.address_df
+
+import CREDA_tools.geocoding.arcgis as arcgis
+import CREDA_tools.geocoding.census as census
+import CREDA_tools.geocoding.generic as generic
+import CREDA_tools.geocoding.lightbox as lightbox
 
 class ValidatorFactory():
     '''Basic Factory class for validators'''
