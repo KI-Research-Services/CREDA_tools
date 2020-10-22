@@ -10,12 +10,12 @@ Since most geocoders require private access / API keys, we use the free Census g
 from CREDA_tools import helper
 
 # Begin run on dataset 1 by parsing addresses
-project = helper.CREDA_Project("test_data/san_jose_d1.csv")
+project = helper.CREDA_Project("CREDA_tools/test_data/san_jose_d1.csv")
 project.clean_addresses()
 
 # Add a Census geocoding
 project.run_geocoding('Census')
-project.assign_shapefile("test_data/san_jose_shapes.csv")
+project.assign_shapefile("CREDA_tools/test_data/san_jose_shapes.csv")
 project.perform_piercing()
 
 # Pick best match sets up the correct shapefile to generate a UBID from
@@ -24,11 +24,11 @@ project.pick_best_match()
 project.generate_UBIDs()
 
 # Repeat all steps for the second dataset
-project2 = helper.CREDA_Project("test_data/san_jose_d2.csv")
+project2 = helper.CREDA_Project("CREDA_tools/test_data/san_jose_d2.csv")
 project2.clean_addresses()
 
 project2.run_geocoding('Census')
-project2.assign_shapefile("test_data/san_jose_shapes.csv")
+project2.assign_shapefile("CREDA_tools/test_data/san_jose_shapes.csv")
 project2.perform_piercing()
 project2.pick_best_match()
 project2.generate_UBIDs()
