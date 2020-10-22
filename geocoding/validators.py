@@ -10,7 +10,7 @@ import CREDA_tools.geocoding.census as census
 import CREDA_tools.geocoding.generic as generic
 import CREDA_tools.geocoding.lightbox as lightbox
 
-class AddressValidator(object):
+class AddressValidator(): # pylint: disable=too-few-public-methods
     '''This is the parent object that all Validators inherit from'''
     def __init__(self, address_df=None):
         self.address_df = address_df
