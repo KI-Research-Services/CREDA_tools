@@ -39,5 +39,6 @@ class ValidatorFactory():
             import CREDA_tools.geocoding.lightbox as lightbox
             return lightbox.LightBoxValidator(geocode_file)
         else: # If validator type isn't defined
-            pass # TODO add in code for generic type
+            import CREDA_tools.geocoding.generic as generic
+            return generic.GenericValidator(geocode_file, validator_type)
         return None
