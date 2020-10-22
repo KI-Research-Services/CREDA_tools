@@ -27,7 +27,7 @@ project2.run_geocoding('Census')
 
 #Add results of ArcGIS geocoding
 project.add_geocoder_results('ArcGIS', 'CREDA_tools/test_data/Arc_output.csv')
-project2.add_geocoder_results('ArcGIS', 'CREDA_tools/test_data/Arc_output2.csv')
+project2.add_geocoder_results('generic', 'CREDA_tools/test_data/generic_geo_2.csv')
 
 #Run rest of steps to UBIDs on dataset 1
 project.assign_shapefile("test_data\\san_jose_shapes.csv")
