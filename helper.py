@@ -38,6 +38,9 @@ def jaccard_combine(file_1, file_2, threshold, outfile):
     df_1 = pd.read_csv(file_1)
     df_2 = pd.read_csv(file_2)
     
+    df_1 = df_1[df_1['UBID'].notna()]
+    df_2 = df_2[df_2['UBID'].notna()]
+    
     df1_matches = []
     df1_rows = []
 
@@ -191,8 +194,8 @@ class CREDA_Project:
         self.parsed_addresses = address_lines[['TempIDZ',
                                                'single_address']].set_index('TempIDZ')
         self.IDs = address_lines[['TempID', 'TempIDZ']].set_index('TempIDZ')
-        self.address_errors = address_lines[['TempID', 'parsed_addr',
-                                             'flags']].set_index('TempID')
+        self.address_errors = address_lines[['TempID', 'flags']]
+        self.address_errors = self.address_errors.drop_duplicates(subset='TempID').set_index('TempID')
         self.df_list.append(self.parsed_addresses)
         self.df_list.append(self.address_errors)
 
@@ -309,9 +312,9 @@ class CREDA_Project:
         temp = self.IDs
         for df in self.df_list:
             if df.index.name == 'TempIDZ':
-                temp = pd.merge(temp, df, how='inner', left_index=True, right_index=True)
+                temp = pd.merge(temp, df, how='left', left_index=True, right_index=True)
             if df.index.name == 'TempID':
-                temp = pd.merge(temp, df, how='inner', left_on='TempID', right_index=True)
+                temp = pd.merge(temp, df, how='left', left_on='TempID', right_index=True)
         #print(temp)
         temp = temp[~temp.index.duplicated(keep='first')]
         temp.to_csv(outfile)
