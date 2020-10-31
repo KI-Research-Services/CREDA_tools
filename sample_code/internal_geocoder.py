@@ -10,7 +10,7 @@ Since most geocoders require private access / API keys, we use the free Census g
 from CREDA_tools import helper
 
 # Begin run on dataset 1 by parsing addresses
-project = helper.CREDA_Project("CREDA_tools/test_data/san_jose_d1.csv")
+project = helper.CREDA_Project("addresses", "CREDA_tools/test_data/san_jose_d1.csv")
 project.clean_addresses()
 
 # Add a Census geocoding
@@ -24,7 +24,7 @@ project.pick_best_match()
 project.generate_UBIDs()
 
 # Repeat all steps for the second dataset
-project2 = helper.CREDA_Project("CREDA_tools/test_data/san_jose_d2.csv")
+project2 = helper.CREDA_Project("addresses", "CREDA_tools/test_data/san_jose_d2.csv")
 project2.clean_addresses()
 
 project2.run_geocoding('Census')
@@ -34,4 +34,7 @@ project2.pick_best_match()
 project2.generate_UBIDs()
 
 # Produce results, a jaccard joined combination of the two datasets based on UBID
-results = project.jaccard_combine(project2)
+# Saves to outfile.csv
+results = project.jaccard_combine(project2, outfile="outfile.csv")
+
+##helper.jaccard_combine(file1, file2)
