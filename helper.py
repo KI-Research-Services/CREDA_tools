@@ -53,7 +53,6 @@ def jaccard_combine(file_1, file_2, threshold, outfile):
     results = pd.DataFrame(df1_rows)
     results['MatchIDZ'] = df1_matches
     results.index.rename('TempIDZ', inplace=True)
-    results.reset_index()
 
     results = pd.merge(results, df_2, how='left', left_on='MatchIDZ', right_index=True)
 
@@ -217,7 +216,8 @@ class CREDA_Project:
         self.df_list.append(self.geocoder_results)
 
     def run_geocoding(self, geocoder: str):
-        df_to_geocode = pd.merge(self.parsed_addresses, self.orig_addresses[['city', 'postal', 'state']], how='inner', left_on='TempID', right_index=True)
+        temp = pd.merge(self.parsed_addresses, self.IDs, how='inner', left_index=True, right_index=True)
+        df_to_geocode = pd.merge(temp, self.orig_addresses[['city', 'postal', 'state']], how='inner', left_on='TempID', right_index=True)
 
         validator_factory = validators.ValidatorFactory()
         temp_geocoder = validator_factory.create_realtime_validator(geocoder, df_to_geocode)
@@ -312,7 +312,8 @@ class CREDA_Project:
                 temp = pd.merge(temp, df, how='inner', left_index=True, right_index=True)
             if df.index.name == 'TempID':
                 temp = pd.merge(temp, df, how='inner', left_on='TempID', right_index=True)
-            #print(temp.size[0])
+        #print(temp)
+        temp = temp[~temp.index.duplicated(keep='first')]
         temp.to_csv(outfile)
 
 '''

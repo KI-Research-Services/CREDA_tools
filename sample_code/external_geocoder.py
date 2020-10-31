@@ -39,6 +39,10 @@ project2.perform_piercing()
 project2.pick_best_match()
 project2.generate_UBIDs()
 
+project.save_all("UBIDs1.csv")
+project2.save_all("UBIDs2.csv")
+
+helper.jaccard_combine("UBIDs1.csv","UBIDs2.csv", threshold=0.6, outfile="combined.csv")
 
 #Use a Jaccard join to combine into one dataset
-results = project.jaccard_combine(project2)
+#results = project.jaccard_combine(project2)
