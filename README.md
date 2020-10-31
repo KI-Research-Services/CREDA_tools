@@ -125,7 +125,7 @@ project2 = helper.CREDA_Project("test_data\\san_jose_d2.csv")
 project2.clean_addresses()
 
 project2.run_geocoding('Census')
-project2.assign_shapefile("test_data\\san_jose_shapes.csv")
+project2.assign_shapefile("CREDA_tools/test_data/san_jose_shapes.csv")
 project2.perform_piercing()
 project2.pick_best_match()
 project2.generate_UBIDs()
