@@ -18,7 +18,7 @@ project.clean_addresses()
 project.make_geocoder_file("for_geocoding.csv")
 
 #Begin run on dataset 2
-project2 = helper.CREDA_Project("addresses", "test_data/san_jose_d2.csv")
+project2 = helper.CREDA_Project("addresses", "CREDA_tools/test_data/san_jose_d2.csv")
 project2.clean_addresses()
 project2.make_geocoder_file("for_geocoding2.csv")
 
