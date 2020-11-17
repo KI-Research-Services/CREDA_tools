@@ -38,8 +38,8 @@ class CensusValidator(validators.AddressValidator):
         while end < to_process.shape[0]:
             print(f'Sending from {start} to {end-1} to Census')
             temp = to_process[start:end]
-            temp.to_csv(self.temp_file, header=False)
-            result = cg.addressbatch(self.temp_file)
+            temp.to_csv('temp_census.txt', header=False)
+            result = cg.addressbatch("temp_census.txt")
             ordered = pd.DataFrame.from_dict(result)
             if to_return.shape[0] == 0:
                 to_return = ordered
