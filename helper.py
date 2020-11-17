@@ -234,14 +234,19 @@ class CREDA_Project:
     def save_geocoding(self, filename: str, data_fields = False, address_fields = False):
         if data_fields:
             if address_fields:
-                temp = pd.merge(self.geocoder_results, self.parsed_addresses, how = 'inner', left_index = True, right_index = True)
+                temp = pd.merge(self.geocoder_results, self.IDs, how='inner', left_index=True, right_index=True)
+                temp = pd.merge(temp, self.parsed_addresses, how = 'inner', left_index = True, right_index = True)
+                temp = pd.merge(temp, self.orig_addresses, how='inner', left_on='TempID', right_index=True)
                 temp = pd.merge(temp, self.data_lines, how='inner', left_on='TempID', right_index = True)
             else:
-                temp = pd.merge(self.geocoder_results, self.parsed_addresses[['TempID']], how = 'inner', left_index = True, right_index = True)
+                temp = pd.merge(self.geocoder_results, self.IDs, how='inner', left_index=True, right_index=True)
+                temp = pd.merge(temp, self.parsed_addresses, how = 'inner', left_index = True, right_index = True)
                 temp = pd.merge(temp, self.data_lines, how='inner', left_on='TempID', right_index = True)
         else:
             if address_fields:
-                temp = pd.merge(self.geocoder_results, self.parsed_addresses, how = 'inner', left_index = True, right_index = True)
+                temp = pd.merge(self.geocoder_results, self.IDs, how='inner', left_index=True, right_index=True)
+                temp = pd.merge(temp, self.parsed_addresses, how = 'inner', left_index = True, right_index = True)
+                temp = pd.merge(temp, self.orig_addresses, how='inner', left_on='TempID', right_index=True)
             else:
                 temp = self.geocoder_results
         temp.to_csv(filename)
