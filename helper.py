@@ -264,12 +264,34 @@ class CREDA_Project:
         geocoders = [x[:-4] for x in self.geocoder_results.columns if "_lat" in x]
         for geocoder in geocoders:
             columns = [x for x in self.geocoder_results.columns if geocoder in x]
+            print(f'Sending {columns} to process_df')
             temp_pierced = self.shapes.process_df(self.geocoder_results[columns], geocoder, offset=0.0005)
+            print(temp_pierced)
             if self.piercing_results.shape[0] > 0:
                 self.piercing_results = pd.merge(self.piercing_results, temp_pierced, how='outer', left_index=True, right_index=True)
                 self.df_list.append(self.piercing_results)
             else:
                 self.piercing_results = temp_pierced
+ 
+    def save_piercing(self, filename: str, data_fields = False, address_fields = False):
+        if data_fields:
+            if address_fields:
+                temp = pd.merge(self.piercing_results, self.IDs, how='inner', left_index=True, right_index=True)
+                temp = pd.merge(temp, self.parsed_addresses, how = 'inner', left_index = True, right_index = True)
+                temp = pd.merge(temp, self.orig_addresses, how='inner', left_on='TempID', right_index=True)
+                temp = pd.merge(temp, self.data_lines, how='inner', left_on='TempID', right_index = True)
+            else:
+                temp = pd.merge(self.piercing_results, self.IDs, how='inner', left_index=True, right_index=True)
+                temp = pd.merge(temp, self.parsed_addresses, how = 'inner', left_index = True, right_index = True)
+                temp = pd.merge(temp, self.data_lines, how='inner', left_on='TempID', right_index = True)
+        else:
+            if address_fields:
+                temp = pd.merge(self.piercing_results, self.IDs, how='inner', left_index=True, right_index=True)
+                temp = pd.merge(temp, self.parsed_addresses, how = 'inner', left_index = True, right_index = True)
+                temp = pd.merge(temp, self.orig_addresses, how='inner', left_on='TempID', right_index=True)
+            else:
+                temp = self.piercing_results
+        temp.to_csv(filename)
 
     def pick_best_match(self, func=None):
         if func is None:

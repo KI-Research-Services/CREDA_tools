@@ -53,13 +53,16 @@ class ShapesList():
         count = 0
         for idx, item in subset_df.iterrows():
             point = Point(item.long, item.lat)
+            #print(point)
+            #print(f'Item long and lat are {item.long} {item.lat}')
             bounded_xy = []
             pierced = []
+            #print(f'Shape of shape_df is {self.shape_df.shape}')
             filtered_shapes = self.shape_df[(self.shape_df.minx - offset < item.long) &
                            (self.shape_df.maxx + offset > item.long) &
                            (self.shape_df.miny - offset < item.lat) &
                            (self.shape_df.maxy + offset > item.lat)]
-
+            #print(f'Shape of filtered_shapes is {filtered_shapes.shape}')
             for shapeID, shape in filtered_shapes.iterrows():
                 polygon = shapely.wkt.loads(shape.polygon)
                 if point.within(polygon): #If it pierces the shape, add to the pierced list
