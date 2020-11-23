@@ -72,7 +72,7 @@ class CREDA_Project:
     shapes = pd.DataFrame()
     UBIDs = pd.DataFrame()
 
-    def __init__(self, entry, filename: str):
+    def __init__(self, entry, filename: str, geocoder=None):
         pd.set_option('max_columns', 10)
         infile_path = Path(filename)
         if not infile_path.is_absolute():
@@ -114,22 +114,22 @@ class CREDA_Project:
         self.df_list.append(self.orig_addresses)
         self.df_list.append(self.data_lines)
         
-    def _geocodes_entry(self, file_lines):
+    def _geocodes_entry(self, file_lines, geocoder='generic'):
+        print(file_lines)
         # create TempIDZ
         file_lines.reset_index(inplace=True)
         file_lines.rename(columns={'index':'TempIDZ'}, inplace=True)
         file_lines['TempIDZ'] = file_lines['TempIDZ'] + 1
+        print(file_lines)
         
-        geocoder_lines = file_lines[['TempIDZ', 'long', 'lat', 'confidence']].copy()
-        if 'TempID' in file_lines.columns:
-            geocoder_lines['TempID'] = file_lines['TempID']
-        else:
-            geocoder_lines['TempID'] = geocoder_lines['TempIDZ']
+        if 'TempID' not in file_lines.columns:
+            file_lines['TempID'] = file_lines['TempIDZ']
         
-        self.geocoder_results = geocoder_lines.copy().set_index('TempID')
+        self.geocoder_results = file_lines[['TempIDZ','lat','long','confidence']].copy().set_index('TempIDZ')
+        self.geocoder_results.columns=[f'{geocoder}_lat',f'{geocoder}_long',f'{geocoder}_confidence']
         self.data_lines = file_lines.drop(columns=['TempIDZ', 'lat', 'long',
                                                    'confidence']).copy().set_index('TempID')
-        self.IDs = geocoder_lines[['TempID', 'TempIDZ']].set_index('TempIDZ')
+        self.IDs = file_lines[['TempID', 'TempIDZ']].set_index('TempIDZ')
         self.df_list.append(self.geocoder_results)
         self.df_list.append(self.data_lines)
         
