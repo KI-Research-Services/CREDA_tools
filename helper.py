@@ -115,6 +115,11 @@ class CREDA_Project:
         self.df_list.append(self.data_lines)
         
     def _geocodes_entry(self, file_lines, geocoder='generic'):
+        for x in ['lat','long','confidence']:
+            if x not in file_lines.columns:
+                raise Exception(f'Missing column "{x}" in your geocoder input')
+            if file_lines[f'{x}'].dtype == 'object':
+                raise Exception(f'You appear to have non-numeric data in column {x}')
         print(file_lines)
         # create TempIDZ
         file_lines.reset_index(inplace=True)
