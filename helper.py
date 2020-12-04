@@ -68,7 +68,8 @@ class CREDA_Project:
     piercing_results = pd.DataFrame()
     best_matches = pd.DataFrame()
     parsed_addresses = pd.DataFrame()
-    address_errors = pd.DataFrame()
+    TempID_errors = pd.DataFrame()
+    TempIDZ_errors = pd.DataFrame()
     shapes = pd.DataFrame()
     UBIDs = pd.DataFrame()
 
@@ -182,6 +183,9 @@ class CREDA_Project:
         self.df_list.append(self.UBIDs)
         self.df_list.append(self.data_lines)
 
+    def _add_IDZ_errors(new_errors):
+        pass
+
     def clean_addresses(self):
         address_lines = self.orig_addresses.reset_index()
         address_lines['addr'] = address_lines['addr'].str.lower()
@@ -199,13 +203,13 @@ class CREDA_Project:
         self.parsed_addresses = address_lines[['TempIDZ',
                                                'single_address']].set_index('TempIDZ')
         self.IDs = address_lines[['TempID', 'TempIDZ']].set_index('TempIDZ')
-        self.address_errors = address_lines[['TempID', 'flags']]
-        self.address_errors = self.address_errors.drop_duplicates(subset='TempID').set_index('TempID')
+        self.TempID_errors = address_lines[['TempID', 'flags']]
+        self.TempID_errors = self.TempID_errors.drop_duplicates(subset='TempID').set_index('TempID')
         self.df_list.append(self.parsed_addresses)
-        self.df_list.append(self.address_errors)
+        self.df_list.append(self.TempID_errors)
 
     def addr_parse_report(self, outfile: str):
-        temp = pd.merge(self.orig_addresses, self.address_errors, how='inner', left_index=True, right_index=True)
+        temp = pd.merge(self.orig_addresses, self.TempID_errors, how='inner', left_index=True, right_index=True)
         temp.to_csv(outfile)
 
     def make_geocoder_file(self, outfile: str):
@@ -224,6 +228,21 @@ class CREDA_Project:
         self.df_list.append(self.geocoder_results)
 
     def run_geocoding(self, geocoder: str):
+        '''
+        This function runs a geocoder in real time, provided you have the authentication
+        to run it.
+
+        Parameters
+        ----------
+        geocoder : str
+            The specific geocoder you are running. Currently accepts Census. Need to
+            add support for GAPI and ArcGIS.
+
+        Returns
+        -------
+        None.
+
+        '''
         temp = pd.merge(self.parsed_addresses, self.IDs, how='inner', left_index=True, right_index=True)
         df_to_geocode = pd.merge(temp, self.orig_addresses[['city', 'postal', 'state']], how='inner', left_on='TempID', right_index=True)
 
@@ -234,6 +253,7 @@ class CREDA_Project:
         if self.geocoder_results.shape[0] > 0:
             validated_df = pd.merge(self.geocoder_results, validated_df, how='inner', right_index=True, left_index=True)
         self.geocoder_results = validated_df
+        self._add_IDZ_errors()
         self.df_list.append(self.geocoder_results)
         
     def save_geocoding(self, filename: str, data_fields = False, address_fields = False):
