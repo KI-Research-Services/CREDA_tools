@@ -183,7 +183,8 @@ class CREDA_Project:
         self.df_list.append(self.UBIDs)
         self.df_list.append(self.data_lines)
 
-    def _add_IDZ_errors(new_errors):
+    def _get_geocoding_errors():
+        
         pass
 
     def clean_addresses(self):
@@ -253,7 +254,6 @@ class CREDA_Project:
         if self.geocoder_results.shape[0] > 0:
             validated_df = pd.merge(self.geocoder_results, validated_df, how='inner', right_index=True, left_index=True)
         self.geocoder_results = validated_df
-        self._add_IDZ_errors()
         self.df_list.append(self.geocoder_results)
         
     def save_geocoding(self, filename: str, data_fields = False, address_fields = False):

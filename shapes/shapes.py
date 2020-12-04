@@ -24,24 +24,28 @@ class ShapesList():
         
         #For each shape, change to polygon, and get min/max coords. Append to list of dictionaries
         for idx, item in shape_frame.iterrows():
-        try:
-            WKT = shapely.wkt.loads(item.GEOM)
-            for polygon in list(WKT):
-                minx, miny, maxx, maxy = polygon.bounds
-                centerx, centery = (polygon.centroid.coords)[0]
-                UBID = bc.encode(latitudeLo=miny,
-                                 longitudeLo=minx,
-                                 latitudeHi=maxy,
-                                 longitudeHi=maxx,
-                                 latitudeCenter=centery,
-                                 longitudeCenter=centerx,
-                                 codeLength=16)
-                shapes.append({'shapeID':idx, 'shapeIDZ':shapeIDZ, 'polygon':polygon.to_wkt(),
-                               'minx':minx, 'maxx':maxx, 'miny': miny, 'maxy':maxy,
-                               'centerx':centerx, 'centery':centery, 'UBID': UBID})
-                shapeIDZ = shapeIDZ + 1
-        except WKTReadingError:
-            self.failed_shapes.append(idx)
+            try:
+                WKT = shapely.wkt.loads(item.GEOM)
+                if WKT.geom_type == 'MultiPolygon':
+                    WKT_shapes = list(WKT)
+                else:
+                    WKT_shapes = [WKT]
+                for polygon in WKT_shapes:
+                    minx, miny, maxx, maxy = polygon.bounds
+                    centerx, centery = (polygon.centroid.coords)[0]
+                    UBID = bc.encode(latitudeLo=miny,
+                                     longitudeLo=minx,
+                                     latitudeHi=maxy,
+                                     longitudeHi=maxx,
+                                     latitudeCenter=centery,
+                                     longitudeCenter=centerx,
+                                     codeLength=16)
+                    shapes.append({'shapeID':idx, 'shapeIDZ':shapeIDZ, 'polygon':polygon.to_wkt(),
+                                   'minx':minx, 'maxx':maxx, 'miny': miny, 'maxy':maxy,
+                                   'centerx':centerx, 'centery':centery, 'UBID': UBID})
+                    shapeIDZ = shapeIDZ + 1
+            except WKTReadingError:
+                self.failed_shapes.append(idx)
         
         #Create dataframe for shapes, this time with min/max
         #We can probably do this with a .apply() method, but the above loop was clear enough.
