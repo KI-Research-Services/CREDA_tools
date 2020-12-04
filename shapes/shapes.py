@@ -4,7 +4,7 @@ Created on Tue Jun  2 10:10:38 2020
 
 @author: fisherd
 """
-import numpy as np
+
 import pandas as pd
 from shapely.geometry import Point#, Polygon
 from shapely.geos import WKTReadingError #Needed for new error
@@ -20,11 +20,13 @@ class ShapesList():
         shape_frame.drop_duplicates(inplace=True)
         shapes = []
         self.failed_shapes = []
+        shapeIDZ = 0
         
         #For each shape, change to polygon, and get min/max coords. Append to list of dictionaries
         for idx, item in shape_frame.iterrows():
-            try:
-                polygon = shapely.wkt.loads(item.GEOM)
+        try:
+            WKT = shapely.wkt.loads(item.GEOM)
+            for polygon in list(WKT):
                 minx, miny, maxx, maxy = polygon.bounds
                 centerx, centery = (polygon.centroid.coords)[0]
                 UBID = bc.encode(latitudeLo=miny,
@@ -34,11 +36,12 @@ class ShapesList():
                                  latitudeCenter=centery,
                                  longitudeCenter=centerx,
                                  codeLength=16)
-                shapes.append({'shapeID':idx, 'polygon':item.GEOM,
+                shapes.append({'shapeID':idx, 'shapeIDZ':shapeIDZ, 'polygon':polygon.to_wkt(),
                                'minx':minx, 'maxx':maxx, 'miny': miny, 'maxy':maxy,
                                'centerx':centerx, 'centery':centery, 'UBID': UBID})
-            except WKTReadingError:
-                self.failed_shapes.append(idx)
+                shapeIDZ = shapeIDZ + 1
+        except WKTReadingError:
+            self.failed_shapes.append(idx)
         
         #Create dataframe for shapes, this time with min/max
         #We can probably do this with a .apply() method, but the above loop was clear enough.
