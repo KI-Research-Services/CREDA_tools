@@ -22,18 +22,3 @@ project.perform_piercing()
 # We are only using a single geocoder, so this step will be fast.
 project.pick_best_match()
 project.generate_UBIDs()
-
-# Repeat all steps for the second dataset
-project2 = helper.CREDA_Project("addresses", "CREDA_tools/test_data/san_jose_d2.csv")
-project2.clean_addresses()
-
-project2.run_geocoding('Census')
-project2.assign_shapefile("CREDA_tools/test_data/san_jose_shapes.csv")
-project2.perform_piercing()
-project2.pick_best_match()
-project2.generate_UBIDs()
-
-project.save_all("UBIDs1.csv")
-project2.save_all("UBIDs2.csv")
-
-helper.jaccard_combine("UBIDs1.csv","UBIDs2.csv", threshold=0.6, outfile="combined.csv")
