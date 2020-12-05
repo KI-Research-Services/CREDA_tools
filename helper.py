@@ -18,6 +18,8 @@ from CREDA_tools.address_parsing import addr_splitter
 from CREDA_tools.geocoding import validators
 from CREDA_tools.shapes import shapes as SHP
 
+pd.options.mode.chained_assignment = None
+
 def simple_max(row, geocoders):
     found = False
     best_geocoder = ""
@@ -121,12 +123,10 @@ class CREDA_Project:
                 raise Exception(f'Missing column "{x}" in your geocoder input')
             if file_lines[f'{x}'].dtype == 'object':
                 raise Exception(f'You appear to have non-numeric data in column {x}')
-        print(file_lines)
         # create TempIDZ
         file_lines.reset_index(inplace=True)
         file_lines.rename(columns={'index':'TempIDZ'}, inplace=True)
         file_lines['TempIDZ'] = file_lines['TempIDZ'] + 1
-        print(file_lines)
         
         if 'TempID' not in file_lines.columns:
             file_lines['TempID'] = file_lines['TempIDZ']
@@ -183,8 +183,7 @@ class CREDA_Project:
         self.df_list.append(self.UBIDs)
         self.df_list.append(self.data_lines)
 
-    def _get_geocoding_errors():
-        
+    def _get_geocoding_errors(): 
         pass
 
     def clean_addresses(self):
@@ -249,6 +248,7 @@ class CREDA_Project:
 
         validator_factory = validators.ValidatorFactory()
         temp_geocoder = validator_factory.create_realtime_validator(geocoder, df_to_geocode)
+
         validated_df = temp_geocoder.get_validator_matches()
 
         if self.geocoder_results.shape[0] > 0:
@@ -288,9 +288,7 @@ class CREDA_Project:
         geocoders = [x[:-4] for x in self.geocoder_results.columns if "_lat" in x]
         for geocoder in geocoders:
             columns = [x for x in self.geocoder_results.columns if geocoder in x]
-            print(f'Sending {columns} to process_df')
             temp_pierced = self.shapes.process_df(self.geocoder_results[columns], geocoder, offset=0.0005)
-            print(temp_pierced)
             if self.piercing_results.shape[0] > 0:
                 self.piercing_results = pd.merge(self.piercing_results, temp_pierced, how='outer', left_index=True, right_index=True)
                 self.df_list.append(self.piercing_results)
@@ -369,7 +367,6 @@ class CREDA_Project:
                 temp = pd.merge(temp, df, how='left', left_index=True, right_index=True)
             if df.index.name == 'TempID':
                 temp = pd.merge(temp, df, how='left', left_on='TempID', right_index=True)
-        #print(temp)
         temp = temp[~temp.index.duplicated(keep='first')]
         temp.to_csv(outfile)
 
