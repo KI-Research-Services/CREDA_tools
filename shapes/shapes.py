@@ -23,12 +23,17 @@ class ShapesList():
         shapeIDZ = 0
         #For each shape, change to polygon, and get min/max coords. Append to list of dictionaries
         for idx, item in shape_frame.iterrows():
+            if 'PARCEL_APN' in shape_frame.columns:
+                index = item.PARCEL_APN
+            else:
+                index = idx
             try:
                 WKT = shapely.wkt.loads(item.GEOM)
                 if WKT.geom_type == 'MultiPolygon':
                     WKT_shapes = list(WKT)
                 else:
                     WKT_shapes = [WKT]
+                print(len(WKT_shapes))
                 for polygon in WKT_shapes:
                     minx, miny, maxx, maxy = polygon.bounds
                     centerx, centery = (polygon.centroid.coords)[0]
@@ -39,7 +44,7 @@ class ShapesList():
                                      latitudeCenter=centery,
                                      longitudeCenter=centerx,
                                      codeLength=16)
-                    shapes.append({'shapeID':idx, 'shapeIDZ':shapeIDZ, 'polygon':polygon.to_wkt(),
+                    shapes.append({'shapeID':index, 'shapeIDZ':shapeIDZ, 'polygon':polygon.to_wkt(),
                                    'minx':minx, 'maxx':maxx, 'miny': miny, 'maxy':maxy,
                                    'centerx':centerx, 'centery':centery, 'UBID': UBID})
                     shapeIDZ = shapeIDZ + 1
