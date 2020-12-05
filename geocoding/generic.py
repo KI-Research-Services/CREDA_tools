@@ -31,7 +31,9 @@ class GenericValidator(validators.AddressValidator):
         '''
         if os.path.exists(self.geocode_file):
             geocode_results = pd.read_csv(self.geocode_file)
-            print(geocode_results)
+            if 'TempIDZ' not in geocode_results.columns:
+                geocode_results.reset_index(inplace=True)
+                geocode_results.rename(columns={'index':'TempIDZ'}, inplace=True)
             geocode_results = geocode_results[['TempIDZ', 'lat', 'long', 'confidence']]
             geocode_results.rename(columns={'lat':f'{self.validator_type}_lat',
                                             'long':f'{self.validator_type}_long',
