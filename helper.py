@@ -88,24 +88,19 @@ class CREDA_Project:
             self.config.read('config.ini')
             print("Using user-provided config.ini file")
 
-        file_lines = pd.read_csv(infile_path)
-        
         if entry == 'addresses':
-            self._address_entry(file_lines)
+            self._address_entry(infile_path)
         elif entry == 'geocodes':
-            self._geocodes_entry(file_lines)
+            self._geocodes_entry(infile_path, geocoder)
         elif entry == 'parcels':
-            self._parcel_entry(file_lines)
-        elif entry == 'UBIDs':
-            self._UBIDs_entry(file_lines)
+            self._parcel_entry(infile_path)
         else:
-            print('Valid entry types are "addresses", "geocodes", "parcels", and "UBIDs"')
+            print('Valid entry types are "addresses", "geocodes", and "parcels"')
             raise Exception(f'{entry} not a valid entry type.')
-        
-        del file_lines
     
-    def _address_entry(self, file_lines):
+    def _address_entry(self, infile_path):
         # create TempID
+        file_lines = pd.read_csv(infile_path)
         file_lines.reset_index(inplace=True)
         file_lines.rename(columns={'index':'TempID'}, inplace=True)
         file_lines['TempID'] = file_lines['TempID'] + 1
@@ -117,7 +112,8 @@ class CREDA_Project:
         self.df_list.append(self.orig_addresses)
         self.df_list.append(self.data_lines)
         
-    def _geocodes_entry(self, file_lines, geocoder='generic'):
+    def _geocodes_entry(self, infile_path, geocoder='generic'):
+        file_lines = pd.read_csv(infile_path)
         for x in ['lat','long','confidence']:
             if x not in file_lines.columns:
                 raise Exception(f'Missing column "{x}" in your geocoder input')
@@ -139,27 +135,23 @@ class CREDA_Project:
         self.df_list.append(self.geocoder_results)
         self.df_list.append(self.data_lines)
         
-    def _parcel_entry(self, file_lines):
+    def _parcel_entry(self, infile):
         # This will have to accept TempID and geometry
         # It will produce TempIDZ, shapeID, min/max fields, center fields
         
-        # create TempIDZ
-        file_lines.reset_index(inplace=True)
-        file_lines.rename(columns={'index':'TempIDZ'}, inplace=True)
-        file_lines['TempIDZ'] = file_lines['TempIDZ'] + 1
+        print(f'Using {infile} for parcel piercing')
+        self.shapes = SHP.ShapesList(infile)
         
-        geocoder_lines = file_lines[['TempIDZ', 'long', 'lat', 'confidence']].copy()
-        if 'TempID' in file_lines.columns:
-            geocoder_lines['TempID'] = file_lines['TempID']
-        else:
-            geocoder_lines['TempID'] = geocoder_lines['TempIDZ']
+        self.IDs = self.shapes.shape_df[['shapeID']].reset_index()
+        self.IDs.rename(columns={'shapeID':'TempID', 'shapeIDZ':'TempIDZ'}, inplace=True)
+        self.IDs.set_index('TempIDZ', inplace=True)
         
-        self.geocoder_results = geocoder_lines.copy().set_index('TempIDZ')
-        self.data_lines = file_lines.drop(columns=['TempIDZ', 'lat', 'long',
-                                                   'confidence']).copy().set_index('TempID')
-        self.IDs = geocoder_lines[['TempID', 'TempIDZ']].set_index('TempIDZ')
-        self.df_list.append(self.geocoder_results)
-        self.df_list.append(self.data_lines)
+        self.UBIDs = self.shapes.shape_df[['UBID']].reset_index()
+        self.UBIDs.rename(columns={'shapeIDZ':'TempIDZ'}, inplace=True)
+        self.UBIDs.set_index('TempIDZ', inplace=True)
+        
+        self.df_list.append(self.UBIDs)
+
         
     def _UBIDs_entry(self, file_lines):
         # This will have to accept TempID and UBIDs

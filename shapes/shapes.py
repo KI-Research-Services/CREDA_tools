@@ -21,7 +21,6 @@ class ShapesList():
         shapes = []
         self.failed_shapes = []
         shapeIDZ = 0
-        
         #For each shape, change to polygon, and get min/max coords. Append to list of dictionaries
         for idx, item in shape_frame.iterrows():
             try:
@@ -50,7 +49,7 @@ class ShapesList():
         #Create dataframe for shapes, this time with min/max
         #We can probably do this with a .apply() method, but the above loop was clear enough.
         self.shape_df = pd.DataFrame.from_dict(shapes)
-        self.shape_df.set_index('shapeID', inplace=True)
+        self.shape_df.set_index('shapeIDZ', inplace=True)
         
     def process_df(self,complete_df:pd.DataFrame, validator:str, offset:float = 0):
         print(f'Processing for {validator}')

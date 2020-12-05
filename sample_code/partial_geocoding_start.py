@@ -12,7 +12,6 @@ from CREDA_tools import helper
 #Begin run on dataset starting WITH geocodes
 project = helper.CREDA_Project("geocodes", "CREDA_tools/test_data/generic_geo_2.csv", geocoder='generic')
 
-#Run rest of steps to UBIDs on dataset 2
 project.assign_shapefile("CREDA_tools/test_data/san_jose_shapes.csv")
 project.perform_piercing()
 project.pick_best_match()
