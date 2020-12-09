@@ -33,7 +33,7 @@ class ShapesList():
                     WKT_shapes = list(WKT)
                 else:
                     WKT_shapes = [WKT]
-                print(len(WKT_shapes))
+                #print(len(WKT_shapes))
                 for polygon in WKT_shapes:
                     minx, miny, maxx, maxy = polygon.bounds
                     centerx, centery = (polygon.centroid.coords)[0]
