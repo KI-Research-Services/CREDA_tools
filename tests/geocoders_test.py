@@ -7,8 +7,6 @@ Created on Mon Aug 31 08:09:36 2020
 
 import os
 
-os.chdir("C:\\Users\\fisherd\\Desktop\\projects\\CREDA\\")
-
 import pytest
 
 from CREDA_tools.geocoding import validators

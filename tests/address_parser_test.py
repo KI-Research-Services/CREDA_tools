@@ -5,13 +5,8 @@ Created on Mon Aug 31 07:09:51 2020
 @author: fisherd
 """
 
-import os
-
-os.chdir("C:\\Users\\fisherd\\Desktop\\projects\\CREDA\\")
-
-import pytest
-
 from CREDA_tools.address_parsing import algo_grammar
+from CREDA_tools.address_parsing import addr_splitter
 
 def test_canAssertTrue():
     assert True
@@ -70,28 +65,9 @@ def test_spaceDelimiter():
 def test_through():
     temp = algo_grammar.AddrParser('1031 through 1043 ster')
     assert temp.get_addrs() == ['1031-1043 ster']
-'''
+    
+def test_blank_address():
+    temp = algo_grammar.AddrParser('')
+    assert temp.get_flags() == ['Err_00 : No Address Record']
 
-
-
-
-']
-def test_basicParse():
-    temp = algo_grammar.AddrParser('8 Queensland Ct')
-    assert temp.get_addrs() == ['8 queensland ct']
-def test_basicParse():
-    temp = algo_grammar.AddrParser('8 Queensland Ct')
-    assert temp.get_addrs() == ['8 queensland ct']
-def test_basicParse():
-    temp = algo_grammar.AddrParser('8 Queensland Ct')
-    assert temp.get_addrs() == ['8 queensland ct']
-def test_basicParse():
-    temp = algo_grammar.AddrParser('8 Queensland Ct')
-    assert temp.get_addrs() == ['8 queensland ct']
-def test_basicParse():
-    temp = algo_grammar.AddrParser('8 Queensland Ct')
-    assert temp.get_addrs() == ['8 queensland ct']
-def test_basicParse():
-    temp = algo_grammar.AddrParser('8 Queensland Ct')
-    assert temp.get_addrs() == ['8 queensland ct']
 '''
