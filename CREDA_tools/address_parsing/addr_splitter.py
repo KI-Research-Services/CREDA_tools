@@ -49,6 +49,6 @@ def split_df_addresses(addr_df: pd.DataFrame):
                 return_list.append({'TempID':row.TempID, 'TempIDZ':temp_idz,
                                     'single_address':address})
 
-
+    
     return_df = pd.DataFrame(return_list)
     return return_df

@@ -13,17 +13,17 @@ from CREDA_tools import helper
 
 # Begin run on dataset 1 through creation of file to Geocode
 # NOTE: Below are in windows relative paths. Modify as needed for Linux/Mac or absolute pass
-project = helper.CREDA_Project("addresses", "CREDA_tools/test_data/san_jose_d1.csv")
+project = helper.CREDA_Project("addresses", "test_data/san_jose_d1.csv")
 project.clean_addresses()
 project.make_geocoder_file("for_geocoding.csv")
 
 #####Run Geocoding on for_geocoding.csv #####
 
-project.add_geocoder_results('ArcGIS', 'CREDA_tools/test_data/Arc_output.csv')
+project.add_geocoder_results('ArcGIS', 'test_data/Arc_output.csv')
 
 
 #Run rest of steps to UBIDs on dataset 1
-project.assign_shapefile("CREDA_tools/test_data/san_jose_shapes.csv")
+project.assign_shapefile("test_data/san_jose_shapes.csv")
 project.perform_piercing()
 project.generate_UBIDs()
 

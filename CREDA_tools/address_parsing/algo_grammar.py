@@ -39,8 +39,11 @@ class AddrParser:
         self.flags = []
         self.city = city
         self.postal = postal
-        address.strip()
+        address = address.strip()
         address = re.sub('\\.', '', address)
+        if address == '':
+            self.flags.append(AddrParser.Token('Err_00', typ='flag'))
+            return
         if '(' in address:
             address = re.sub('\\(.+\\)', '', address)
             self.flags.append(AddrParser.Token('Err_02', typ='flag'))
@@ -164,8 +167,8 @@ class AddrParser:
         def __repr__(self):
             return f"'{self.strng}':'{self.typ}'"
 
-    Error_Codes = {'Err_01':'No Numeric Found',
-                   'Err_02':'Parenthesis in address',
+    Error_Codes = {'Err_00':'No Address Record',
+                   'Err_02':'No Numeric Found',
                    'Err_03':'Apartment token without valid token following',
                    'Err_04':'Possible bad range order',
                    'Err_05':'Badly formed address',
@@ -174,6 +177,7 @@ class AddrParser:
                    'Inf_02':'Long Number',
                    'Inf_03':'Ambiguous Direction, Unit',
                    'Inf_04':'Has numbers divided by slash',
+                   'Inf_05':'Parenthesis in address',
                    'Inf_10':'Queens address'
                    }
 
@@ -687,3 +691,17 @@ class AddrParser:
         for flag in self.flags:
             temp_flags.append(f'{flag.strng} : {self.Error_Codes[flag.strng]}')
         return temp_flags
+
+    def get_status(self):
+        '''
+        Basic functio to return whether it has error flags
+
+        Returns
+        -------
+        A T/F value based on whether it has error flags
+
+        '''
+        for flag in self.flags:
+            if 'Err' in flag.strng:
+                return True
+        return False

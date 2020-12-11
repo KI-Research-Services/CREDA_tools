@@ -76,8 +76,13 @@ class CREDA_Project:
     UBIDs = pd.DataFrame()
 
     def __init__(self, entry, filename: str, geocoder=None):
+        print('\nInitializing run')
         pd.set_option('max_columns', 10)
         infile_path = Path(filename)
+
+        if not infile_path.is_file():
+            raise FileNotFoundError('Failed to find infile')
+
         if not infile_path.is_absolute():
             infile_path = Path.cwd() / infile_path
 
@@ -86,7 +91,7 @@ class CREDA_Project:
         self.config = configparser.ConfigParser()
         if Path.exists(Path.cwd() / 'config.ini'):
             self.config.read('config.ini')
-            print("Using user-provided config.ini file")
+            print("\tUsing user-provided config.ini file")
 
         if entry == 'addresses':
             self._address_entry(infile_path)
@@ -96,16 +101,19 @@ class CREDA_Project:
             self._parcel_entry(infile_path)
         else:
             print('Valid entry types are "addresses", "geocodes", and "parcels"')
-            raise Exception(f'{entry} not a valid entry type.')
+            raise ValueError(f'{entry} not a valid entry type.')
     
     def _address_entry(self, infile_path):
-        # create TempID
+        print('\tStarting with addresses')
         file_lines = pd.read_csv(infile_path)
         file_lines.reset_index(inplace=True)
         file_lines.rename(columns={'index':'TempID'}, inplace=True)
         file_lines['TempID'] = file_lines['TempID'] + 1
-        
+        for item in ['TempID', 'addr', 'city', 'postal', 'state']:
+            if item not in file_lines.columns:
+                raise KeyError(f"Your infile doesn't contain the {item} column")
         address_lines = file_lines[['TempID', 'addr', 'city', 'postal', 'state']].copy()
+        address_lines = address_lines.fillna('')
         self.orig_addresses = address_lines.copy().set_index('TempID')
         self.data_lines = file_lines.drop(columns=['addr', 'city', 'postal',
                                                    'state']).copy().set_index('TempID')
@@ -113,6 +121,7 @@ class CREDA_Project:
         self.df_list.append(self.data_lines)
         
     def _geocodes_entry(self, infile_path, geocoder='generic'):
+        print('\tStarting with geocodes')
         file_lines = pd.read_csv(infile_path)
         for x in ['lat','long','confidence']:
             if x not in file_lines.columns:
@@ -138,8 +147,8 @@ class CREDA_Project:
     def _parcel_entry(self, infile):
         # This will have to accept TempID and geometry
         # It will produce TempIDZ, shapeID, min/max fields, center fields
-        
-        print(f'Using {infile} for parcel piercing')
+        print('\tStarting with shapes')
+        print(f'\tUsing {infile} for parcel piercing')
         self.shapes = SHP.ShapesList(infile)
         
         self.IDs = self.shapes.shape_df[['shapeID']].reset_index()
@@ -159,6 +168,7 @@ class CREDA_Project:
         # project to merge datasets
         
         # create TempIDZ
+        print('\tStarting with UBIDs')
         file_lines.reset_index(inplace=True)
         file_lines.rename(columns={'index':'TempIDZ'}, inplace=True)
         file_lines['TempIDZ'] = file_lines['TempIDZ'] + 1
@@ -179,6 +189,8 @@ class CREDA_Project:
         pass
 
     def clean_addresses(self):
+        print('\nBeginning Address cleaning step')
+        failed_count = 0
         address_lines = self.orig_addresses.reset_index()
         address_lines['addr'] = address_lines['addr'].str.lower()
         address_lines['parsed_addr'] = address_lines['addr']
@@ -188,10 +200,11 @@ class CREDA_Project:
             temp = algo_grammar.AddrParser(row['addr'], row['postal'], row['city'])
             row['parsed_addr'] = temp.get_addrs()
             row['flags'] = temp.get_flags()
+            failed_count = failed_count + temp.get_status()
             address_lines.iloc[idx] = row
 
         temp = addr_splitter.split_df_addresses(address_lines[['TempID', 'parsed_addr']])
-        address_lines = pd.merge(address_lines, temp, how='inner', on='TempID')
+        address_lines = pd.merge(address_lines, temp, how='left', on='TempID')
         self.parsed_addresses = address_lines[['TempIDZ',
                                                'single_address']].set_index('TempIDZ')
         self.IDs = address_lines[['TempID', 'TempIDZ']].set_index('TempIDZ')
@@ -199,17 +212,21 @@ class CREDA_Project:
         self.TempID_errors = self.TempID_errors.drop_duplicates(subset='TempID').set_index('TempID')
         self.df_list.append(self.parsed_addresses)
         self.df_list.append(self.TempID_errors)
+        print(f'\tFailed to parse {failed_count} addresses')
 
     def addr_parse_report(self, outfile: str):
-        temp = pd.merge(self.orig_addresses, self.TempID_errors, how='inner', left_index=True, right_index=True)
+        print(f'\nGenerating parse report at "{outfile}"')
+        temp = pd.merge(self.orig_addresses, self.TempID_errors, how='left', left_index=True, right_index=True)
         temp.to_csv(outfile)
 
     def make_geocoder_file(self, outfile: str):
-        temp = pd.merge(self.parsed_addresses, self.IDs, how='inner', left_index=True, right_index = True)
-        temp = pd.merge(temp, self.orig_addresses[['city', 'postal', 'state']], how='inner', left_on='TempID', right_index=True)
+        print(f'\nGenerating file to geocode at "{outfile}"')
+        temp = pd.merge(self.IDs, self.parsed_addresses, how='inner', left_index=True, right_index = True)
+        temp = pd.merge(temp, self.orig_addresses[['city', 'postal', 'state']], how='left', left_on='TempID', right_index=True)
         temp.to_csv(outfile)
 
     def add_geocoder_results(self, geocoder: str, filename: str):
+        print(f'\nAdding geocoding results from "{filename}"')
         validator_factory = validators.ValidatorFactory()
         
         temp_geocoder = validator_factory.create_external_validator(geocoder, filename)
@@ -273,7 +290,7 @@ class CREDA_Project:
         temp_shapefile = Path(shapefile)
         if not temp_shapefile.is_absolute():
             temp_shapefile = Path.cwd() / temp_shapefile
-        print(f'Using {temp_shapefile} for parcel piercing')
+        print(f'\nUsing {temp_shapefile} for parcel piercing')
         self.shapes = SHP.ShapesList(temp_shapefile)
 
     def perform_piercing(self):
