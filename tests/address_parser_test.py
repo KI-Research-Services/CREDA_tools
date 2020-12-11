@@ -4,9 +4,12 @@ Created on Mon Aug 31 07:09:51 2020
 
 @author: fisherd
 """
+import numpy as np
+import pandas as pd
 
 from CREDA_tools.address_parsing import algo_grammar
 from CREDA_tools.address_parsing import addr_splitter
+
 
 def test_canAssertTrue():
     assert True
@@ -70,4 +73,12 @@ def test_blank_address():
     temp = algo_grammar.AddrParser('')
     assert temp.get_flags() == ['Err_00 : No Address Record']
 
-'''
+def test_splitter_single_count():
+    temp_df = pd.DataFrame(np.array([[0,['1419 sierra creek way']]]), columns = ['TempID','parsed_addr'])
+    response = addr_splitter.split_df_addresses(temp_df)
+    assert response.shape == (1,3)
+
+def test_splitter_single_addr():
+    temp_df = pd.DataFrame(np.array([[0,['1419 sierra creek way']]]), columns = ['TempID','parsed_addr'])
+    response = addr_splitter.split_df_addresses(temp_df)
+    assert response.iloc[0,2] == '1419 sierra creek way'
