@@ -148,7 +148,7 @@ class CREDA_Project:
         # This will have to accept TempID and geometry
         # It will produce TempIDZ, shapeID, min/max fields, center fields
         print('\tStarting with shapes')
-        print(f'\tUsing {infile} for parcel piercing')
+        print(f'\tUsing {infile.name} for parcel piercing')
         self.shapes = SHP.ShapesList(infile)
         
         self.IDs = self.shapes.shape_df[['shapeID']].reset_index()
@@ -204,7 +204,7 @@ class CREDA_Project:
             address_lines.iloc[idx] = row
 
         temp = addr_splitter.split_df_addresses(address_lines[['TempID', 'parsed_addr']])
-        address_lines = pd.merge(address_lines, temp, how='left', on='TempID')
+        address_lines = pd.merge(address_lines, temp, how='inner', on='TempID')
         self.parsed_addresses = address_lines[['TempIDZ',
                                                'single_address']].set_index('TempIDZ')
         self.IDs = address_lines[['TempID', 'TempIDZ']].set_index('TempIDZ')
@@ -290,10 +290,11 @@ class CREDA_Project:
         temp_shapefile = Path(shapefile)
         if not temp_shapefile.is_absolute():
             temp_shapefile = Path.cwd() / temp_shapefile
-        print(f'\nUsing {temp_shapefile} for parcel piercing')
+        print(f'\nLoading {temp_shapefile.name} for parcel piercing')
         self.shapes = SHP.ShapesList(temp_shapefile)
 
     def perform_piercing(self):
+        print('\nBeginning parcel piercing')
         geocoders = [x[:-4] for x in self.geocoder_results.columns if "_lat" in x]
         for geocoder in geocoders:
             columns = [x for x in self.geocoder_results.columns if geocoder in x]
@@ -370,6 +371,7 @@ class CREDA_Project:
         temp.to_csv(filename)
 
     def save_all(self, outfile):
+        print(f'\nSaving data to {outfile}')
         temp = self.IDs
         for df in self.df_list:
             if df.index.name == 'TempIDZ':

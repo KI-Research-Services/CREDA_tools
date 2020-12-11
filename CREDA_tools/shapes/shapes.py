@@ -57,7 +57,7 @@ class ShapesList():
         self.shape_df.set_index('shapeIDZ', inplace=True)
         
     def process_df(self,complete_df:pd.DataFrame, validator:str, offset:float = 0):
-        print(f'Processing for {validator}')
+        print(f'\tProcessing for {validator}')
         results = []
         subset_df = complete_df[[f'{validator}_long',f'{validator}_lat']]
         subset_df.columns = ['long','lat']

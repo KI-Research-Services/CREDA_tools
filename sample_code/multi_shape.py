@@ -9,4 +9,4 @@ import pandas as pd
 
 from CREDA_tools.shapes import shapes as SHP
 
-shapes = SHP.ShapesList('CREDA_tools/test_data/shape_test.csv')
+shapes = SHP.ShapesList('test_data/shape_test.csv')

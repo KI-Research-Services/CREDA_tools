@@ -10,9 +10,9 @@ UBID file can readily be combined with results of other files
 from CREDA_tools import helper
 
 #Begin run on dataset starting WITH geocodes
-project = helper.CREDA_Project("geocodes", "CREDA_tools/test_data/generic_geo_2.csv", geocoder='generic')
+project = helper.CREDA_Project("geocodes", "test_data/generic_geo_2.csv", geocoder='generic')
 
-project.assign_shapefile("CREDA_tools/test_data/san_jose_shapes.csv")
+project.assign_shapefile("test_data/san_jose_shapes.csv")
 project.perform_piercing()
 project.pick_best_match()
 project.generate_UBIDs()

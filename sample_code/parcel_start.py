@@ -11,6 +11,6 @@ and saves.
 
 from CREDA_tools import helper
 
-project = helper.CREDA_Project("parcels", "CREDA_tools/test_data/san_jose_shapes.csv")
+project = helper.CREDA_Project("parcels", "test_data/san_jose_shapes.csv")
 
 project.save_all("UBID1.csv")

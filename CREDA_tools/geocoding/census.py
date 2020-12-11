@@ -23,7 +23,7 @@ class CensusValidator(validators.AddressValidator):
     
     def __init__(self, address_df):
         super().__init__(address_df)
-        self.temp_file = Path.cwd() / "temp_files" / "Census_temp.csv"
+        self.temp_file = Path.cwd() / "Census_temp.csv"
         self.process_addresses()
 
     def process_addresses(self):
@@ -31,12 +31,13 @@ class CensusValidator(validators.AddressValidator):
         
     def run_validator_matches(self, to_process):
         '''Returns validated, Geocoded addresses for self.address_df, using the Census tool'''
+        print('\nBeginning Census Geocoding')
         to_process = to_process[['single_address', 'city', 'state', 'postal']]
         to_return = pd.DataFrame()
         start = 0
         end = increment = 900
         while end < to_process.shape[0]:
-            print(f'Sending from {start} to {end-1} to Census')
+            print(f'\tSending from {start} to {end-1} to Census')
             temp = to_process[start:end]
             temp.to_csv('temp_census.txt', header=False)
             result = cg.addressbatch("temp_census.txt")
@@ -48,10 +49,10 @@ class CensusValidator(validators.AddressValidator):
             start = end
             end = end + increment
             time.sleep(10)
-        print(f'Sending from {start} to {to_process.shape[0]} to Census')
+        print(f'\tSending from {start} to {to_process.shape[0]} to Census')
         temp = to_process[start:end]
         temp.to_csv(self.temp_file, header=False)
-        result = cg.addressbatch(f'temp_files/{self.temp_file.name}')
+        result = cg.addressbatch(f'{self.temp_file.name}')
         ordered = pd.DataFrame.from_dict(result)
         if to_return.shape[0] == 0:
             to_return = ordered
