@@ -203,10 +203,12 @@ class CREDA_Project:
             failed_count = failed_count + temp.get_status()
             address_lines.iloc[idx] = row
 
+        print(address_lines[0:5])
         temp = addr_splitter.split_df_addresses(address_lines[['TempID', 'parsed_addr']])
         address_lines = pd.merge(address_lines, temp, how='inner', on='TempID')
         self.parsed_addresses = address_lines[['TempIDZ',
                                                'single_address']].set_index('TempIDZ')
+        self.parsed_addresses = self.parsed_addresses[self.parsed_addresses['single_address'] !=""]
         self.IDs = address_lines[['TempID', 'TempIDZ']].set_index('TempIDZ')
         self.TempID_errors = address_lines[['TempID', 'flags']]
         self.TempID_errors = self.TempID_errors.drop_duplicates(subset='TempID').set_index('TempID')
@@ -373,11 +375,14 @@ class CREDA_Project:
     def save_all(self, outfile):
         print(f'\nSaving data to {outfile}')
         temp = self.IDs
+        #print(temp.head())
         for df in self.df_list:
             if df.index.name == 'TempIDZ':
                 temp = pd.merge(temp, df, how='left', left_index=True, right_index=True)
+                #print(temp.head())
             if df.index.name == 'TempID':
                 temp = pd.merge(temp, df, how='left', left_on='TempID', right_index=True)
+                #print(temp.head())
         temp = temp[~temp.index.duplicated(keep='first')]
         temp.to_csv(outfile)
 
