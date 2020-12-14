@@ -69,6 +69,10 @@ def test_through():
     temp = algo_grammar.AddrParser('1031 through 1043 ster')
     assert temp.get_addrs() == ['1031-1043 ster']
     
+def test_consecutive_delimiter():
+    temp = algo_grammar.AddrParser('1359, 1353, 1341, and 1333 Oakland Rd')
+    assert temp.get_addrs() == ['1359 oakland rd', '1353 oakland rd', '1341 oakland rd', '1333 oakland rd']
+
 def test_blank_address():
     temp = algo_grammar.AddrParser('')
     assert temp.get_flags() == ['Err_00 : No Address Record']
@@ -82,3 +86,19 @@ def test_splitter_single_addr():
     temp_df = pd.DataFrame(np.array([[0,['1419 sierra creek way']]]), columns = ['TempID','parsed_addr'])
     response = addr_splitter.split_df_addresses(temp_df)
     assert response.iloc[0,2] == '1419 sierra creek way'
+
+def test_splitter_single_addr():
+    temp_df = pd.DataFrame(np.array([[0,['1419 sierra creek way']]]), columns = ['TempID','parsed_addr'])
+    response = addr_splitter.split_df_addresses(temp_df)
+    assert response.iloc[0,2] == '1419 sierra creek way'
+
+def test_splitter_multi_count():
+    temp_df = pd.DataFrame(np.array([[0,['1419-1425 sierra creek way']]]), columns = ['TempID','parsed_addr'])
+    response = addr_splitter.split_df_addresses(temp_df)
+    assert response.shape == (4,3)
+    
+def test_splitter_multi_top():
+    #This test to make sure in a range the top number is among results
+    temp_df = pd.DataFrame(np.array([[0,['1419-1425 sierra creek way']]]), columns = ['TempID','parsed_addr'])
+    response = addr_splitter.split_df_addresses(temp_df)
+    assert response.iloc[3,2] == '1425 sierra creek way'

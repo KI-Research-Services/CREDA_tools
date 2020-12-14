@@ -39,7 +39,7 @@ def split_df_addresses(addr_df: pd.DataFrame):
                 start = re.search('(\\d+)-(\\d+)', address).group(1)
                 end = re.search('(\\d+)-(\\d+)', address).group(2)
                 partial_address = re.search('(\\d+)-(\\d+) (.+)', address).group(3)
-                for r_del in range(int(start), int(end), 2):
+                for r_del in range(int(start), int(end)+1, 2):
                     temp_idz = temp_idz + 1
                     single_address = f'{r_del} {partial_address}'
                     return_list.append({'TempID':row.TempID, 'TempIDZ':temp_idz,
