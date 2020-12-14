@@ -274,6 +274,8 @@ class AddrParser:
                         del pieces[0]
                     elif pieces[1].strng == ' ':
                         del pieces[1]
+                    if pieces[0].strng == ',':
+                        del pieces[0]
                     else:
                         temp_pieces.append(pieces[0])
                         del pieces[0]
