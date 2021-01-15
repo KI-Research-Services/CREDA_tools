@@ -39,10 +39,10 @@ def simple_max(row, geocoders):
 def jaccard_combine(file_1, file_2, threshold, outfile):
     df_1 = pd.read_csv(file_1)
     df_2 = pd.read_csv(file_2)
-    
+
     df_1 = df_1[df_1['UBID'].notna()]
     df_2 = df_2[df_2['UBID'].notna()]
-    
+
     df1_matches = []
     df1_rows = []
 
@@ -75,7 +75,7 @@ class CREDA_Project:
     shapes = pd.DataFrame()
     UBIDs = pd.DataFrame()
 
-    def __init__(self, entry, filename: str, geocoder=None):
+    def __init__(self, entry, filename: str, geocoder='base'):
         print('\nInitializing run')
         pd.set_option('max_columns', 10)
         infile_path = Path(filename)
@@ -87,7 +87,7 @@ class CREDA_Project:
             infile_path = Path.cwd() / infile_path
 
         self.entry = entry
-        self.df_list = []
+        self.df_list = {}
         self.config = configparser.ConfigParser()
         if Path.exists(Path.cwd() / 'config.ini'):
             self.config.read('config.ini')
@@ -102,7 +102,7 @@ class CREDA_Project:
         else:
             print('Valid entry types are "addresses", "geocodes", and "parcels"')
             raise ValueError(f'{entry} not a valid entry type.')
-    
+
     def _address_entry(self, infile_path):
         print('\tStarting with addresses')
         file_lines = pd.read_csv(infile_path)
@@ -117,10 +117,10 @@ class CREDA_Project:
         self.orig_addresses = address_lines.copy().set_index('TempID')
         self.data_lines = file_lines.drop(columns=['addr', 'city', 'postal',
                                                    'state']).copy().set_index('TempID')
-        self.df_list.append(self.orig_addresses)
-        self.df_list.append(self.data_lines)
-        
-    def _geocodes_entry(self, infile_path, geocoder='generic'):
+        self.df_list['orig_addresses'] = self.orig_addresses
+        self.df_list['data_lines'] = self.data_lines
+
+    def _geocodes_entry(self, infile_path, geocoder='base'):
         print('\tStarting with geocodes')
         file_lines = pd.read_csv(infile_path)
         for x in ['lat','long','confidence']:
@@ -128,64 +128,67 @@ class CREDA_Project:
                 raise Exception(f'Missing column "{x}" in your geocoder input')
             if file_lines[f'{x}'].dtype == 'object':
                 raise Exception(f'You appear to have non-numeric data in column {x}')
+        print("check 1")
         # create TempIDZ
-        file_lines.reset_index(inplace=True)
-        file_lines.rename(columns={'index':'TempIDZ'}, inplace=True)
-        file_lines['TempIDZ'] = file_lines['TempIDZ'] + 1
-        
-        if 'TempID' not in file_lines.columns:
+        if 'TempIDZ' not in file_lines.columns:
+            file_lines.reset_index(inplace=True)
+            file_lines.rename(columns={'index':'TempIDZ'}, inplace=True)
+        print(file_lines.columns)
+        if not 'TempID' in file_lines.columns:
             file_lines['TempID'] = file_lines['TempIDZ']
-        
+        print("check 3")
         self.geocoder_results = file_lines[['TempIDZ','lat','long','confidence']].copy().set_index('TempIDZ')
         self.geocoder_results.columns=[f'{geocoder}_lat',f'{geocoder}_long',f'{geocoder}_confidence']
+        print("check 4")
         self.data_lines = file_lines.drop(columns=['TempIDZ', 'lat', 'long',
                                                    'confidence']).copy().set_index('TempID')
         self.IDs = file_lines[['TempID', 'TempIDZ']].set_index('TempIDZ')
-        self.df_list.append(self.geocoder_results)
-        self.df_list.append(self.data_lines)
-        
+        print("check 5")
+        self.df_list['geocoder_results'] = self.geocoder_results
+        self.df_list['data_lines'] = self.data_lines
+
     def _parcel_entry(self, infile):
         # This will have to accept TempID and geometry
         # It will produce TempIDZ, shapeID, min/max fields, center fields
         print('\tStarting with shapes')
         print(f'\tUsing {infile.name} for parcel piercing')
         self.shapes = SHP.ShapesList(infile)
-        
+
         self.IDs = self.shapes.shape_df[['shapeID']].reset_index()
         self.IDs.rename(columns={'shapeID':'TempID', 'shapeIDZ':'TempIDZ'}, inplace=True)
         self.IDs.set_index('TempIDZ', inplace=True)
-        
+
         self.UBIDs = self.shapes.shape_df[['UBID']].reset_index()
         self.UBIDs.rename(columns={'shapeIDZ':'TempIDZ'}, inplace=True)
         self.UBIDs.set_index('TempIDZ', inplace=True)
-        
-        self.df_list.append(self.UBIDs)
 
-        
+        self.df_list['UBIDs'] = self.UBIDs
+
+
     def _UBIDs_entry(self, file_lines):
         # This will have to accept TempID and UBIDs
         # It will produce TempIDZ only. Presumably this will be combined with another
         # project to merge datasets
-        
+
         # create TempIDZ
         print('\tStarting with UBIDs')
         file_lines.reset_index(inplace=True)
         file_lines.rename(columns={'index':'TempIDZ'}, inplace=True)
         file_lines['TempIDZ'] = file_lines['TempIDZ'] + 1
-        
+
         UBID_lines = file_lines[['TempIDZ', 'UBID']].copy()
         if 'TempID' in file_lines.columns:
             UBID_lines['TempID'] = file_lines['TempID']
         else:
             UBID_lines['TempID'] = UBID_lines['TempIDZ']
-        
+
         self.UBIDs = UBID_lines.copy().set_index('TempIDZ')
         self.data_lines = file_lines.drop(columns=['TempIDZ', 'UBID']).copy().set_index('TempID')
         self.IDs = UBID_lines[['TempID', 'TempIDZ']].set_index('TempIDZ')
-        self.df_list.append(self.UBIDs)
-        self.df_list.append(self.data_lines)
+        self.df_list['UBIDs'] = self.UBIDs
+        self.df_list['data_lines'] = self.data_lines
 
-    def _get_geocoding_errors(): 
+    def _get_geocoding_errors():
         pass
 
     def clean_addresses(self):
@@ -212,8 +215,8 @@ class CREDA_Project:
         self.IDs = address_lines[['TempID', 'TempIDZ']].set_index('TempIDZ')
         self.TempID_errors = address_lines[['TempID', 'flags']]
         self.TempID_errors = self.TempID_errors.drop_duplicates(subset='TempID').set_index('TempID')
-        self.df_list.append(self.parsed_addresses)
-        self.df_list.append(self.TempID_errors)
+        self.df_list['parsed_addresses'] = self.parsed_addresses
+        self.df_list['TempID_errors'] = self.TempID_errors
         print(f'\tFailed to parse {failed_count} addresses')
 
     def addr_parse_report(self, outfile: str):
@@ -230,13 +233,13 @@ class CREDA_Project:
     def add_geocoder_results(self, geocoder: str, filename: str):
         print(f'\nAdding geocoding results from "{filename}"')
         validator_factory = validators.ValidatorFactory()
-        
+
         temp_geocoder = validator_factory.create_external_validator(geocoder, filename)
         validated_df = temp_geocoder.get_validator_matches()
         if self.geocoder_results.shape[0] > 0:
-            validated_df = pd.merge(self.geocoder_results, validated_df, how='inner', right_index=True, left_index=True)
+            validated_df = pd.merge(self.geocoder_results, validated_df, how='outer', right_index=True, left_index=True)
         self.geocoder_results = validated_df
-        self.df_list.append(self.geocoder_results)
+        self.df_list['geocoder_results'] = self.geocoder_results
 
     def run_geocoding(self, geocoder: str):
         '''
@@ -265,8 +268,8 @@ class CREDA_Project:
         if self.geocoder_results.shape[0] > 0:
             validated_df = pd.merge(self.geocoder_results, validated_df, how='inner', right_index=True, left_index=True)
         self.geocoder_results = validated_df
-        self.df_list.append(self.geocoder_results)
-        
+        self.df_list['geocoder_results'] = self.geocoder_results
+
     def save_geocoding(self, filename: str, data_fields = False, address_fields = False):
         if data_fields:
             if address_fields:
@@ -285,7 +288,7 @@ class CREDA_Project:
             else:
                 temp = self.geocoder_results
         temp.to_csv(filename)
-        
+
 
     def assign_shapefile(self, shapefile: str):
         # TODO check if already have a shapefile. This will replace current shapefile
@@ -303,10 +306,10 @@ class CREDA_Project:
             temp_pierced = self.shapes.process_df(self.geocoder_results[columns], geocoder, offset=0.0005)
             if self.piercing_results.shape[0] > 0:
                 self.piercing_results = pd.merge(self.piercing_results, temp_pierced, how='outer', left_index=True, right_index=True)
-                self.df_list.append(self.piercing_results)
+                self.df_list['piercing_results'] = self.piercing_results
             else:
                 self.piercing_results = temp_pierced
- 
+
     def save_piercing(self, filename: str, data_fields = False, address_fields = False):
         if data_fields:
             if address_fields:
@@ -341,18 +344,18 @@ class CREDA_Project:
         temp_df['TempIDZ'] = temp_df.index
         temp_df.set_index('TempIDZ', inplace=True)
         self.best_matches = temp_df[['best_geocoder', 'best_geocoder_ShapeID']]
-        self.df_list.append(self.best_matches)
+        self.df_list['best_matches'] = self.best_matches
 
     def generate_UBIDs(self):
         # TODO only handles single match case
         if self.best_matches.shape[0] < 1:
             self.pick_best_match()
-        
+
         self.best_matches['best_geocoder_ShapeID'] = self.best_matches['best_geocoder_ShapeID'].apply(lambda x: x[0])
         temp = pd.merge(self.best_matches, self.shapes.shape_df[['UBID']], how='left', left_on='best_geocoder_ShapeID', right_index=True)
         self.UBIDs = temp[['UBID']]
-        self.df_list.append(self.UBIDs)
-        
+        self.df_list['UBIDs'] = self.UBIDs
+
     def save_UBIDs(self, filename: str, data_fields = False, address_fields = False):
         if data_fields:
             if address_fields:
@@ -376,13 +379,15 @@ class CREDA_Project:
         print(f'\nSaving data to {outfile}')
         temp = self.IDs
         #print(temp.head())
-        for df in self.df_list:
+        for key in self.df_list.keys():
+            df = self.df_list[key]
+            print("pass")
             if df.index.name == 'TempIDZ':
                 temp = pd.merge(temp, df, how='left', left_index=True, right_index=True)
-                #print(temp.head())
+                print(temp.head())
             if df.index.name == 'TempID':
                 temp = pd.merge(temp, df, how='left', left_on='TempID', right_index=True)
-                #print(temp.head())
+                print(temp.head())
         temp = temp[~temp.index.duplicated(keep='first')]
         temp.to_csv(outfile)
 
@@ -407,7 +412,7 @@ class CREDA_Project:
 
         results = pd.merge(results, self.data_lines, how='left', left_on='TempIDZ', right_index=True)
         results = pd.merge(results, other.data_lines, how='left', left_on='MatchIDZ', right_index=True)
-        
+
         results = pd.merge(results, self.parsed_addresses[['single_address']], how='left', left_on='TempIDZ', right_index=True)
         results = pd.merge(results, other.parsed_addresses[['single_address']], how='left', left_on='MatchIDZ', right_index=True)
 

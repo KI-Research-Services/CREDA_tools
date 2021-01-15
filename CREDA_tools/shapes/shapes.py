@@ -23,7 +23,7 @@ class ShapesList():
         shapeIDZ = 0
         #For each shape, change to polygon, and get min/max coords. Append to list of dictionaries
         for idx, item in shape_frame.iterrows():
-            if 'PARCEL_APN' in shape_frame.columns:
+            if 'ShapeID' in shape_frame.columns:
                 index = item.PARCEL_APN
             else:
                 index = idx
