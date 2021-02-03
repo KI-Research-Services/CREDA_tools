@@ -12,6 +12,17 @@ import shapely.wkt
 
 import buildingid.code as bc
 
+def unpack(WKT_object):
+    if WKT_object.geom_type != 'Polygon':
+        return_list = []
+        WKT_list = list(WKT_object)
+        for WKT in WKT_list:
+            return_list.extend(unpack(WKT))
+        return return_list
+    else:
+        return [WKT_object]
+        
+
 class ShapesList():
     
     def __init__(self, file):
@@ -29,10 +40,7 @@ class ShapesList():
                 index = idx
             try:
                 WKT = shapely.wkt.loads(item.GEOM)
-                if WKT.geom_type == 'MultiPolygon':
-                    WKT_shapes = list(WKT)
-                else:
-                    WKT_shapes = [WKT]
+                WKT_shapes = unpack(WKT)
                 #print(len(WKT_shapes))
                 for polygon in WKT_shapes:
                     minx, miny, maxx, maxy = polygon.bounds
@@ -76,7 +84,9 @@ class ShapesList():
             #print(f'Shape of filtered_shapes is {filtered_shapes.shape}')
             for shapeID, shape in filtered_shapes.iterrows():
                 polygon = shapely.wkt.loads(shape.polygon)
+                print(f"Before within {polygon}")
                 if point.within(polygon): #If it pierces the shape, add to the pierced list
+                    print("In within")
                     if shapeID not in pierced:
                         pierced.append(shapeID)
                 else: #otherwise add it to the bounded list

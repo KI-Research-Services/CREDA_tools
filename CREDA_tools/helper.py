@@ -420,3 +420,13 @@ class CREDA_Project:
             results.to_csv(outfile)
         return results
 '''
+
+'''
+buildingid crossref UBIDs1.csv UBIDs2.csv jaccard.csv --left-fieldname-code="UBID" --right-fieldname-code="UBID"
+
+infile1 = 'UBIDs1.csv'
+infile2 = 'UBIDs2.csv'
+outfile = 'jaccard.csv'
+
+os.system(f'buildingid crossref {infile1} {infile2} {outfile} --left-fieldname-code="UBID" --right-fieldname-code="UBID"')
+'''
