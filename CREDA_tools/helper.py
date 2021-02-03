@@ -32,7 +32,7 @@ def simple_max(row, geocoders):
                 found = True
     if found:
         row['best_geocoder'] = best_geocoder
-        row['best_geocoder_ShapeID'] = row[f'{best_geocoder}_pierced_ShapeIDs']
+        row['best_geocoder_ShapeID'] = row[f'{best_geocoder}_pierced_ShapeIDZs']
         return row
     return None
 

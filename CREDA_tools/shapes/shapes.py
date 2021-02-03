@@ -82,16 +82,16 @@ class ShapesList():
                            (self.shape_df.miny - offset < item.lat) &
                            (self.shape_df.maxy + offset > item.lat)]
             #print(f'Shape of filtered_shapes is {filtered_shapes.shape}')
-            for shapeID, shape in filtered_shapes.iterrows():
+            for shapeIDZ, shape in filtered_shapes.iterrows():
                 polygon = shapely.wkt.loads(shape.polygon)
-                print(f"Before within {polygon}")
+                #print(f"Before within {polygon}")
                 if point.within(polygon): #If it pierces the shape, add to the pierced list
-                    print("In within")
-                    if shapeID not in pierced:
-                        pierced.append(shapeID)
+                    #print("In within")
+                    if shapeIDZ not in pierced:
+                        pierced.append(shapeIDZ)
                 else: #otherwise add it to the bounded list
-                    if shapeID not in bounded_xy:
-                        bounded_xy.append(shapeID)
+                    if shapeIDZ not in bounded_xy:
+                        bounded_xy.append(shapeIDZ)
             #Not false positive or pierced
             if (len(pierced) == 0) and (filtered_shapes.shape[0]>0):
                 nearest = nearest_neighbor(point, filtered_shapes)
@@ -106,7 +106,7 @@ class ShapesList():
             else:
                 status = "Not Found"
             results.append({'TempIDZ':idx, f'{validator}_status':status,
-                                f'{validator}_pierced_ShapeIDs':pierced})
+                                f'{validator}_pierced_ShapeIDZs':pierced})
             count+=1
         to_return = pd.DataFrame.from_dict(results)
         to_return.set_index('TempIDZ', inplace=True)
