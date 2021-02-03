@@ -21,6 +21,15 @@ def unpack(WKT_object):
         return return_list
     else:
         return [WKT_object]
+    
+def get_UBID(polygon):
+    polygon_WKT = shapely.wkt.loads(polygon)
+    minx, miny, maxx, maxy = polygon_WKT.bounds
+    centerx, centery = (polygon_WKT.centroid.coords)[0]
+    UBID = bc.encode(latitudeLo=miny, longitudeLo=minx, latitudeHi=maxy, 
+                                     longitudeHi=maxx, latitudeCenter=centery,
+                                     longitudeCenter=centerx, codeLength=16)
+    return UBID
         
 
 class ShapesList():
@@ -44,17 +53,8 @@ class ShapesList():
                 #print(len(WKT_shapes))
                 for polygon in WKT_shapes:
                     minx, miny, maxx, maxy = polygon.bounds
-                    centerx, centery = (polygon.centroid.coords)[0]
-                    UBID = bc.encode(latitudeLo=miny,
-                                     longitudeLo=minx,
-                                     latitudeHi=maxy,
-                                     longitudeHi=maxx,
-                                     latitudeCenter=centery,
-                                     longitudeCenter=centerx,
-                                     codeLength=16)
                     shapes.append({'shapeID':index, 'shapeIDZ':shapeIDZ, 'polygon':polygon.to_wkt(),
-                                   'minx':minx, 'maxx':maxx, 'miny': miny, 'maxy':maxy,
-                                   'centerx':centerx, 'centery':centery, 'UBID': UBID})
+                                   'minx':minx, 'maxx':maxx, 'miny': miny, 'maxy':maxy,})
                     shapeIDZ = shapeIDZ + 1
             except WKTReadingError:
                 self.failed_shapes.append(idx)
@@ -107,6 +107,20 @@ class ShapesList():
                 status = "Not Found"
             results.append({'TempIDZ':idx, f'{validator}_status':status,
                                 f'{validator}_pierced_ShapeIDZs':pierced})
+            
+            #Model results, multiple lines
+            '''
+            if pierced_count > 0:
+                status = "Pierced" if (pierced_count==1) else "Pierced_Multiple"
+                for ShapeIDZ in pierced:
+                    results.append({'TempIDZ':idx, f'{validator}_status':status,
+                                f'{validator}_pierced_ShapeIDZs':ShapeIDZ})
+            else:
+                status = "Not Found"
+                results.append({'TempIDZ':idx, f'{validator}_status':status,
+                                f'{validator}_pierced_ShapeIDZs':pierced})
+            '''
+            
             count+=1
         to_return = pd.DataFrame.from_dict(results)
         to_return.set_index('TempIDZ', inplace=True)

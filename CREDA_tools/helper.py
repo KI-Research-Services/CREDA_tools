@@ -25,15 +25,20 @@ def simple_max(row, geocoders):
     best_geocoder = ""
     best_geocoder_score = 0
     for geocoder in geocoders:
-        if row[f'{geocoder}_status'] == 'Pierced':
+        if row[f'{geocoder}_status'] in ['Pierced', 'Pierced_Multiple']:
             if row[f'{geocoder}_confidence'] > best_geocoder_score:
                 best_geocoder = geocoder
                 best_geocoder_score = row[f'{geocoder}_confidence']
                 found = True
     if found:
+        to_return = []
         row['best_geocoder'] = best_geocoder
-        row['best_geocoder_ShapeID'] = row[f'{best_geocoder}_pierced_ShapeIDZs']
-        return row
+        for best_ShapeIDZ in row[f'{best_geocoder}_pierced_ShapeIDZs']:
+            #print(best_ShapeIDZ)
+            row['best_geocoder_ShapeIDZ'] = best_ShapeIDZ
+            #print(row)
+            to_return.append(row.copy())
+        return to_return
     return None
 
 def jaccard_combine(file_1, file_2, threshold, outfile):
@@ -338,22 +343,22 @@ class CREDA_Project:
         best_rows = []
 
         for _, row in best_match_df.iterrows():
-            best_rows.append(func(row, geocoders))
+            best_rows.extend(func(row, geocoders))
         temp_df = pd.concat(best_rows, axis=1)
         temp_df = temp_df.T
         temp_df['TempIDZ'] = temp_df.index
         temp_df.set_index('TempIDZ', inplace=True)
-        self.best_matches = temp_df[['best_geocoder', 'best_geocoder_ShapeID']]
+        self.best_matches = temp_df[['best_geocoder', 'best_geocoder_ShapeIDZ']]
         self.df_list['best_matches'] = self.best_matches
 
     def generate_UBIDs(self):
-        # TODO only handles single match case
+
         if self.best_matches.shape[0] < 1:
             self.pick_best_match()
 
-        self.best_matches['best_geocoder_ShapeID'] = self.best_matches['best_geocoder_ShapeID'].apply(lambda x: x[0])
-        temp = pd.merge(self.best_matches, self.shapes.shape_df[['UBID']], how='left', left_on='best_geocoder_ShapeID', right_index=True)
-        self.UBIDs = temp[['UBID']]
+        self.UBIDs = pd.merge(self.best_matches[['best_geocoder_ShapeIDZ']], self.shapes.shape_df[['polygon']], how='left', left_on='best_geocoder_ShapeIDZ', right_index=True)
+        print(self.UBIDs)
+        self.UBIDs['UBID'] = self.UBIDs['polygon'].apply(SHP.get_UBID)
         self.df_list['UBIDs'] = self.UBIDs
 
     def save_UBIDs(self, filename: str, data_fields = False, address_fields = False):
@@ -388,7 +393,8 @@ class CREDA_Project:
             if df.index.name == 'TempID':
                 temp = pd.merge(temp, df, how='left', left_on='TempID', right_index=True)
                 print(temp.head())
-        temp = temp[~temp.index.duplicated(keep='first')]
+        #temp = temp[~temp.index.duplicated(keep='first')]
+        temp = temp.drop_duplicates(keep='first')
         temp.to_csv(outfile)
 
 '''
