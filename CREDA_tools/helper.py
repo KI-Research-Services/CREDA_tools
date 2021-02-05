@@ -31,14 +31,9 @@ def simple_max(row, geocoders):
                 best_geocoder_score = row[f'{geocoder}_confidence']
                 found = True
     if found:
-        to_return = []
         row['best_geocoder'] = best_geocoder
-        for best_ShapeIDZ in row[f'{best_geocoder}_pierced_ShapeIDZs']:
-            #print(best_ShapeIDZ)
-            row['best_geocoder_ShapeIDZ'] = best_ShapeIDZ
-            #print(row)
-            to_return.append(row.copy())
-        return to_return
+        row['best_geocoder_ShapeIDZ'] = row[f'{best_geocoder}_pierced_ShapeIDZs']
+        return row
     return None
 
 def jaccard_combine(file_1, file_2, threshold, outfile):
@@ -133,22 +128,18 @@ class CREDA_Project:
                 raise Exception(f'Missing column "{x}" in your geocoder input')
             if file_lines[f'{x}'].dtype == 'object':
                 raise Exception(f'You appear to have non-numeric data in column {x}')
-        print("check 1")
         # create TempIDZ
         if 'TempIDZ' not in file_lines.columns:
             file_lines.reset_index(inplace=True)
             file_lines.rename(columns={'index':'TempIDZ'}, inplace=True)
-        print(file_lines.columns)
+        #print(file_lines.columns)
         if not 'TempID' in file_lines.columns:
             file_lines['TempID'] = file_lines['TempIDZ']
-        print("check 3")
         self.geocoder_results = file_lines[['TempIDZ','lat','long','confidence']].copy().set_index('TempIDZ')
         self.geocoder_results.columns=[f'{geocoder}_lat',f'{geocoder}_long',f'{geocoder}_confidence']
-        print("check 4")
         self.data_lines = file_lines.drop(columns=['TempIDZ', 'lat', 'long',
                                                    'confidence']).copy().set_index('TempID')
         self.IDs = file_lines[['TempID', 'TempIDZ']].set_index('TempIDZ')
-        print("check 5")
         self.df_list['geocoder_results'] = self.geocoder_results
         self.df_list['data_lines'] = self.data_lines
 
@@ -343,7 +334,7 @@ class CREDA_Project:
         best_rows = []
 
         for _, row in best_match_df.iterrows():
-            best_rows.extend(func(row, geocoders))
+            best_rows.append(func(row, geocoders))
         temp_df = pd.concat(best_rows, axis=1)
         temp_df = temp_df.T
         temp_df['TempIDZ'] = temp_df.index
@@ -355,11 +346,17 @@ class CREDA_Project:
 
         if self.best_matches.shape[0] < 1:
             self.pick_best_match()
+            
+        UBIDs = [x for y in list(self.best_matches['best_geocoder_ShapeIDZ']) for x in y]
+        UBIDs = list(set(UBIDs))
+        UBIDs = pd.DataFrame(UBIDs, columns=['shapeIDZ']).set_index('shapeIDZ')
+        #We now have a DataFrame, single column, of unique shapeIDs
+        
+        self.UBIDs = pd.merge(UBIDs, self.shapes.shape_df[['shapeID','polygon']], how='inner', left_index=True, right_index=True)
 
-        self.UBIDs = pd.merge(self.best_matches[['best_geocoder_ShapeIDZ']], self.shapes.shape_df[['polygon']], how='left', left_on='best_geocoder_ShapeIDZ', right_index=True)
-        print(self.UBIDs)
         self.UBIDs['UBID'] = self.UBIDs['polygon'].apply(SHP.get_UBID)
-        self.df_list['UBIDs'] = self.UBIDs
+        self.UBIDs.drop(columns=['polygon'], inplace=True)
+        #self.df_list['UBIDs'] = self.UBIDs
 
     def save_UBIDs(self, filename: str, data_fields = False, address_fields = False):
         if data_fields:
@@ -386,16 +383,29 @@ class CREDA_Project:
         #print(temp.head())
         for key in self.df_list.keys():
             df = self.df_list[key]
-            print("pass")
+            #print("pass")
             if df.index.name == 'TempIDZ':
                 temp = pd.merge(temp, df, how='left', left_index=True, right_index=True)
-                print(temp.head())
+                #print(temp.head())
             if df.index.name == 'TempID':
                 temp = pd.merge(temp, df, how='left', left_on='TempID', right_index=True)
-                print(temp.head())
+                #print(temp.head())
         #temp = temp[~temp.index.duplicated(keep='first')]
-        temp = temp.drop_duplicates(keep='first')
-        temp.to_csv(outfile)
+        
+        final_rows = []
+        
+        temp = temp.reset_index()
+        for _, row in temp.iterrows():
+            for item in row['best_geocoder_ShapeIDZ']:
+                row['single_shapeIDZ'] = item
+                final_rows.append(row.copy())
+        final_df = (pd.DataFrame(final_rows))
+        final_df = pd.merge(final_df, self.UBIDs['shapeID'], how = 'inner', left_on='single_shapeIDZ', right_index=True)
+        final_df = pd.merge(final_df, self.UBIDs.reset_index(), how = 'inner', left_on='shapeID', right_on='shapeID')
+        #print(final_df)
+        
+        #Merge with shape_df to get associate shapes
+        final_df.to_csv(outfile)
 
 '''
     def jaccard_combine(self, other, outfile=None):

@@ -108,19 +108,6 @@ class ShapesList():
             results.append({'TempIDZ':idx, f'{validator}_status':status,
                                 f'{validator}_pierced_ShapeIDZs':pierced})
             
-            #Model results, multiple lines
-            '''
-            if pierced_count > 0:
-                status = "Pierced" if (pierced_count==1) else "Pierced_Multiple"
-                for ShapeIDZ in pierced:
-                    results.append({'TempIDZ':idx, f'{validator}_status':status,
-                                f'{validator}_pierced_ShapeIDZs':ShapeIDZ})
-            else:
-                status = "Not Found"
-                results.append({'TempIDZ':idx, f'{validator}_status':status,
-                                f'{validator}_pierced_ShapeIDZs':pierced})
-            '''
-            
             count+=1
         to_return = pd.DataFrame.from_dict(results)
         to_return.set_index('TempIDZ', inplace=True)
