@@ -8,6 +8,7 @@ Created on Fri Sep 18 01:51:37 2020
 #Standard Libraries
 import configparser
 from pathlib import Path
+import pickle
 
 #Third--party Libraries
 import buildingid.code as bc
@@ -63,6 +64,10 @@ def jaccard_combine(file_1, file_2, threshold, outfile):
 
     results.to_csv(outfile)
 
+def create_shape_pickle(infile: str, outfile:str) ->None:
+    shapefile = SHP.ShapesList(infile)
+    pickle.dump(shapefile, open(outfile,"wb"))
+    
 
 class CREDA_Project:
 
@@ -146,9 +151,13 @@ class CREDA_Project:
     def _parcel_entry(self, infile):
         # This will have to accept TempID and geometry
         # It will produce TempIDZ, shapeID, min/max fields, center fields
+        
         print('\tStarting with shapes')
         print(f'\tUsing {infile.name} for parcel piercing')
-        self.shapes = SHP.ShapesList(infile)
+        if '.pickle' in infile:
+            self.shapes = pickle.load(open(infile, "rb"))
+        else:
+            self.shapes = SHP.ShapesList(infile)
 
         self.IDs = self.shapes.shape_df[['shapeID']].reset_index()
         self.IDs.rename(columns={'shapeID':'TempID', 'shapeIDZ':'TempIDZ'}, inplace=True)
@@ -292,7 +301,10 @@ class CREDA_Project:
         if not temp_shapefile.is_absolute():
             temp_shapefile = Path.cwd() / temp_shapefile
         print(f'\nLoading {temp_shapefile.name} for parcel piercing')
-        self.shapes = SHP.ShapesList(temp_shapefile)
+        if '.pickle' in temp_shapefile.name:
+            self.shapes = pickle.load(open(temp_shapefile, "rb"))
+        else:
+            self.shapes = SHP.ShapesList(temp_shapefile)
 
     def perform_piercing(self):
         print('\nBeginning parcel piercing')
