@@ -407,17 +407,20 @@ class CREDA_Project:
         final_rows = []
         
         temp = temp.reset_index()
-        for _, row in temp.iterrows():
+        for _, row in temp[temp['best_geocoder_ShapeIDZ'].notna()].iterrows():
             for item in row['best_geocoder_ShapeIDZ']:
                 row['single_shapeIDZ'] = item
                 final_rows.append(row.copy())
+        for _, row in temp[~temp['best_geocoder_ShapeIDZ'].notna()].iterrows():
+            print(row)
+            final_rows.append(row.copy())
         final_df = (pd.DataFrame(final_rows))
-        final_df = pd.merge(final_df, self.UBIDs['shapeID'], how = 'inner', left_on='single_shapeIDZ', right_index=True)
-        final_df = pd.merge(final_df, self.UBIDs.reset_index(), how = 'inner', left_on='shapeID', right_on='shapeID')
+        final_df = pd.merge(final_df, self.UBIDs['shapeID'], how = 'left', left_on='single_shapeIDZ', right_index=True)
+        final_df = pd.merge(final_df, self.UBIDs.reset_index(), how = 'left', left_on='shapeID', right_on='shapeID')
         #print(final_df)
         
         #Merge with shape_df to get associate shapes
-        final_df.to_csv(outfile)
+        final_df.to_csv(outfile, index=False)
 
 '''
     def jaccard_combine(self, other, outfile=None):
