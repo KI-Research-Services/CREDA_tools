@@ -11,7 +11,6 @@ from shapely.geos import WKTReadingError #Needed for new error
 import shapely.wkt
 
 import buildingid.code as bc
-import vaex
 
 def unpack(WKT_object):
     if WKT_object.geom_type != 'Polygon':
@@ -77,16 +76,11 @@ class ShapesList():
             #print(f'Item long and lat are {item.long} {item.lat}')
             bounded_xy = []
             pierced = []
-            vaex_shape = vaex.from_pandas(self.shape_df)
             #print(f'Shape of shape_df is {self.shape_df.shape}')
-            '''filtered_shapes = self.shape_df[(self.shape_df.minx - offset < item.long) &
+            filtered_shapes = self.shape_df[(self.shape_df.minx - offset < item.long) &
                            (self.shape_df.maxx + offset > item.long) &
                            (self.shape_df.miny - offset < item.lat) &
-                           (self.shape_df.maxy + offset > item.lat)]'''
-            filtered_shapes = vaex_shape[(vaex_shape.minx - offset < item.long) &
-                           (vaex_shape.maxx + offset > item.long) &
-                           (vaex_shape.miny - offset < item.lat) &
-                           (vaex_shape.maxy + offset > item.lat)].to_pandas_df()
+                           (self.shape_df.maxy + offset > item.lat)]
             #print(f'Shape of filtered_shapes is {filtered_shapes.shape}')
             for shapeIDZ, shape in filtered_shapes.iterrows():
                 polygon = shapely.wkt.loads(shape.polygon)
