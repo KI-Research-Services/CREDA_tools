@@ -403,23 +403,26 @@ class CREDA_Project:
                 temp = pd.merge(temp, df, how='left', left_on='TempID', right_index=True)
                 #print(temp.head())
         #temp = temp[~temp.index.duplicated(keep='first')]
-        
-        final_rows = []
-        
-        temp = temp.reset_index()
-        for _, row in temp[temp['best_geocoder_ShapeIDZ'].notna()].iterrows():
-            for item in row['best_geocoder_ShapeIDZ']:
-                row['single_shapeIDZ'] = item
+        print(temp.columns)
+        if self.UBIDs.shape[0]>0:
+            final_rows = []
+            
+            temp = temp.reset_index()
+            for _, row in temp[temp['best_geocoder_ShapeIDZ'].notna()].iterrows():
+                for item in row['best_geocoder_ShapeIDZ']:
+                    row['single_shapeIDZ'] = item
+                    final_rows.append(row.copy())
+            for _, row in temp[~temp['best_geocoder_ShapeIDZ'].notna()].iterrows():
+                #print(row)
                 final_rows.append(row.copy())
-        for _, row in temp[~temp['best_geocoder_ShapeIDZ'].notna()].iterrows():
-            print(row)
-            final_rows.append(row.copy())
-        final_df = (pd.DataFrame(final_rows))
-        final_df = pd.merge(final_df, self.UBIDs['shapeID'], how = 'left', left_on='single_shapeIDZ', right_index=True)
-        final_df = pd.merge(final_df, self.UBIDs.reset_index(), how = 'left', left_on='shapeID', right_on='shapeID')
-        #print(final_df)
+            final_df = (pd.DataFrame(final_rows))
+            
+            #Merge with shape_df to get associate shapes
+            final_df = pd.merge(final_df, self.UBIDs['shapeID'], how = 'left', left_on='single_shapeIDZ', right_index=True)
+            final_df = pd.merge(final_df, self.UBIDs.reset_index(), how = 'left', left_on='shapeID', right_on='shapeID')
         
-        #Merge with shape_df to get associate shapes
+        else:
+            final_df = temp
         final_df.to_csv(outfile, index=False)
 
 '''
