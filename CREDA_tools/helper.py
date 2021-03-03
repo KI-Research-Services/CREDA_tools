@@ -7,6 +7,7 @@ Created on Fri Sep 18 01:51:37 2020
 
 #Standard Libraries
 import configparser
+import logging
 from pathlib import Path
 import pickle
 
@@ -20,6 +21,7 @@ from CREDA_tools.geocoding import validators
 from CREDA_tools.shapes import shapes as SHP
 
 pd.options.mode.chained_assignment = None
+logger = logging.getLogger(__name__)
 
 def simple_max(row, geocoders):
     found = False

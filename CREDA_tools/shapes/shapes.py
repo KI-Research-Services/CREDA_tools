@@ -5,12 +5,15 @@ Created on Tue Jun  2 10:10:38 2020
 @author: fisherd
 """
 
+import logging
 import pandas as pd
 from shapely.geometry import Point#, Polygon
 from shapely.geos import WKTReadingError #Needed for new error
 import shapely.wkt
 
 import buildingid.code as bc
+
+logger = logging.getLogger(__name__)
 
 def unpack(WKT_object):
     if WKT_object.geom_type != 'Polygon':
