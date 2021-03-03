@@ -38,6 +38,7 @@ class ValidatorFactory():
         # TODO add census back in
         # Add GAPI back in
         if validator_type == 'ArcGIS':
+            print("Running ArcGIS")
             return arcgis.ArcGISValidator(geocode_file)
         if validator_type == 'Lightbox':
             return lightbox.LightBoxValidator(geocode_file)

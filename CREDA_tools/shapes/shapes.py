@@ -34,35 +34,49 @@ def get_UBID(polygon):
 
 class ShapesList():
     
+    ShapeID_flags = {}
+    ShapeIDZ_flags = {}
+    
     def __init__(self, file):
         shape_frame = pd.read_csv(file)
-        shape_frame.dropna(inplace=True)
+        shape_frame.dropna(inplace=True) # TODO Currently drops if incomplete info. Likely a problem
         shape_frame.drop_duplicates(inplace=True)
         shapes = []
-        self.failed_shapes = []
-        shapeIDZ = 0
+        failed_shapes = []
+        ShapeIDZ = 0
+        
+        if 'PARCEL_APN' in shape_frame.columns:
+            if 'ShapeID' in shape_frame.columns:
+                print('Warning: PARCEL_APN and ShapeID present. PARCEL_APN retained as data')
+            else:
+                print('INFO: PARCEL_APN used for ShapeID')
+                shape_frame.rename(columns={'PARCEL_APN':'ShapeID'})
+        
         #For each shape, change to polygon, and get min/max coords. Append to list of dictionaries
         for idx, item in shape_frame.iterrows():
             if 'ShapeID' in shape_frame.columns:
-                index = item.PARCEL_APN
+                index = item.ShapeID
             else:
                 index = idx
             try:
                 WKT = shapely.wkt.loads(item.GEOM)
                 WKT_shapes = unpack(WKT)
-                #print(len(WKT_shapes))
                 for polygon in WKT_shapes:
                     minx, miny, maxx, maxy = polygon.bounds
-                    shapes.append({'shapeID':index, 'shapeIDZ':shapeIDZ, 'polygon':polygon.to_wkt(),
+                    shapes.append({'ShapeID':index, 'ShapeIDZ':ShapeIDZ, 'polygon':polygon.to_wkt(),
                                    'minx':minx, 'maxx':maxx, 'miny': miny, 'maxy':maxy,})
-                    shapeIDZ = shapeIDZ + 1
+                    ShapeIDZ = ShapeIDZ + 1
             except WKTReadingError:
-                self.failed_shapes.append(idx)
-        
+                failed_shapes.append({'ShapeID':index,'GEOM':item.GEOM})
+                
+        print("In init creating shape_df")
         #Create dataframe for shapes, this time with min/max
         #We can probably do this with a .apply() method, but the above loop was clear enough.
         self.shape_df = pd.DataFrame.from_dict(shapes)
-        self.shape_df.set_index('shapeIDZ', inplace=True)
+        self.shape_df.set_index('ShapeIDZ', inplace=True)
+        self.failed_shapes = pd.DataFrame.from_dict(failed_shapes)
+        for shape in list(self.failed_shapes.ShapeID):
+            self.ShapeID_flags.setdefault(ShapeID, []).append(flag
         
     def process_df(self,complete_df:pd.DataFrame, validator:str, offset:float = 0):
         print(f'\tProcessing for {validator}')
@@ -82,16 +96,16 @@ class ShapesList():
                            (self.shape_df.miny - offset < item.lat) &
                            (self.shape_df.maxy + offset > item.lat)]
             #print(f'Shape of filtered_shapes is {filtered_shapes.shape}')
-            for shapeIDZ, shape in filtered_shapes.iterrows():
+            for ShapeIDZ, shape in filtered_shapes.iterrows():
                 polygon = shapely.wkt.loads(shape.polygon)
                 #print(f"Before within {polygon}")
                 if point.within(polygon): #If it pierces the shape, add to the pierced list
                     #print("In within")
-                    if shapeIDZ not in pierced:
-                        pierced.append(shapeIDZ)
+                    if ShapeIDZ not in pierced:
+                        pierced.append(ShapeIDZ)
                 else: #otherwise add it to the bounded list
-                    if shapeIDZ not in bounded_xy:
-                        bounded_xy.append(shapeIDZ)
+                    if ShapeIDZ not in bounded_xy:
+                        bounded_xy.append(ShapeIDZ)
             #Not false positive or pierced
             if (len(pierced) == 0) and (filtered_shapes.shape[0]>0):
                 nearest = nearest_neighbor(point, filtered_shapes)
@@ -119,18 +133,19 @@ class ShapesList():
         
     def get_shapes(self):
         return self.shape_df
+
         
 def nearest_neighbor(point, filtered_df):
     nearest_name = None
     nearest_distance = None
-    for shapeID, row in filtered_df.iterrows():
+    for ShapeID, row in filtered_df.iterrows():
         temp_shape = shapely.wkt.loads(row.polygon)
         temp_dist = point.distance(temp_shape)
         if nearest_name is None:
-            nearest_name = shapeID
+            nearest_name = ShapeID
             nearest_distance = temp_dist
         elif temp_dist < nearest_distance:
-            nearest_name = shapeID
+            nearest_name = ShapeID
             nearest_distance = temp_dist
     return nearest_name     
 
