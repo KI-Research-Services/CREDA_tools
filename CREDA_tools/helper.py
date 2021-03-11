@@ -28,10 +28,10 @@ logger.setLevel(logging.INFO)
 filehandler = logging.FileHandler('CREDA_run.log')
 filehandler.setLevel(logging.DEBUG)
 
-streamhandler = logging.StreamHandler()
+streamhandler = logging.StreamHandler(logging.INFO)
 
 logger.addHandler(filehandler)
-logger.addHandler(streamhandler
+logger.addHandler(streamhandler)
 
 
 

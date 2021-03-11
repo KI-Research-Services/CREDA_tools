@@ -80,6 +80,7 @@ class ShapesList():
                     ShapeIDZ = ShapeIDZ + 1
             except WKTReadingError:
                 failed_shapes.append({'ShapeID':index,'GEOM':item.GEOM})
+                logger.exception(f'shapeID {index} failed parsing')
                 
         logger.info("In init creating shape_df")
         #Create dataframe for shapes, this time with min/max
@@ -87,8 +88,10 @@ class ShapesList():
         self.shape_df = pd.DataFrame.from_dict(shapes)
         self.shape_df.set_index('ShapeIDZ', inplace=True)
         self.failed_shapes = pd.DataFrame.from_dict(failed_shapes)
+        '''
         for shape in list(self.failed_shapes.ShapeID):
             self.ShapeID_flags.setdefault(self.ShapeID, []).append("WKT didn't parse correctly")
+        '''
         
     def process_df(self,complete_df:pd.DataFrame, validator:str, offset:float = 0):
         logger.info(f'\tProcessing for {validator}')
