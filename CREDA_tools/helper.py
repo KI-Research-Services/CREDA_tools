@@ -21,14 +21,25 @@ from CREDA_tools.geocoding import validators
 from CREDA_tools.shapes import shapes as SHP
 
 pd.options.mode.chained_assignment = None
+
 logger = logging.getLogger(__name__)
+logger.setLevel(logging.INFO)
+
+filehandler = logging.FileHandler('CREDA_run.log')
+filehandler.setLevel(logging.DEBUG)
+
+streamhandler = logging.StreamHandler()
+
+logger.addHandler(filehandler)
+logger.addHandler(streamhandler
+
+
 
 def simple_max(row, geocoders):
     found = False
     best_geocoder = ""
     best_geocoder_score = 0
     for geocoder in geocoders:
-        print(row)
         if row[f'{geocoder}_status'] in ['Pierced', 'Pierced_Multiple']:
             if row[f'{geocoder}_confidence'] > best_geocoder_score:
                 best_geocoder = geocoder
@@ -70,7 +81,7 @@ def jaccard_combine(file_1, file_2, threshold, outfile):
 def create_shape_pickle(infile: str, outfile:str) ->None:
     shapefile = SHP.ShapesList(infile)
     pickle.dump(shapefile, open(outfile,"wb"))
-    
+
 
 class CREDA_Project:
 
@@ -84,7 +95,7 @@ class CREDA_Project:
     UBIDs = pd.DataFrame()
 
     def __init__(self, entry, filename: str, geocoder='base'):
-        print('\nInitializing run')
+        logging.info('\nInitializing run')
         pd.set_option('max_columns', 10)
         infile_path = Path(filename)
 
@@ -99,7 +110,7 @@ class CREDA_Project:
         self.config = configparser.ConfigParser()
         if Path.exists(Path.cwd() / 'config.ini'):
             self.config.read('config.ini')
-            print("\tUsing user-provided config.ini file")
+            logging.info("\tUsing user-provided config.ini file")
 
         if entry == 'addresses':
             self._address_entry(infile_path)
@@ -108,11 +119,11 @@ class CREDA_Project:
         elif entry == 'parcels':
             self._parcel_entry(infile_path)
         else:
-            print('Valid entry types are "addresses", "geocodes", and "parcels"')
+            logging.info('Valid entry types are "addresses", "geocodes", and "parcels"')
             raise ValueError(f'{entry} not a valid entry type.')
 
     def _address_entry(self, infile_path):
-        print('\tStarting with addresses')
+        logging.info('\tStarting with addresses')
         file_lines = pd.read_csv(infile_path)
         file_lines.reset_index(inplace=True)
         file_lines.rename(columns={'index':'TempID'}, inplace=True)
@@ -129,7 +140,7 @@ class CREDA_Project:
         self.df_list['data_lines'] = self.data_lines
 
     def _geocodes_entry(self, infile_path, geocoder='base'):
-        print('\tStarting with geocodes')
+        logging.info('\tStarting with geocodes')
         file_lines = pd.read_csv(infile_path)
         for x in ['lat','long','confidence']:
             if x not in file_lines.columns:
@@ -140,7 +151,7 @@ class CREDA_Project:
         if 'TempIDZ' not in file_lines.columns:
             file_lines.reset_index(inplace=True)
             file_lines.rename(columns={'index':'TempIDZ'}, inplace=True)
-        #print(file_lines.columns)
+        logging.debug(file_lines.columns)
         if not 'TempID' in file_lines.columns:
             file_lines['TempID'] = file_lines['TempIDZ']
         self.geocoder_results = file_lines[['TempIDZ','lat','long','confidence']].copy().set_index('TempIDZ')
@@ -154,18 +165,16 @@ class CREDA_Project:
     def _parcel_entry(self, infile):
         # This will have to accept TempID and geometry
         # It will produce TempIDZ, ShapeID, min/max fields, center fields
-        
-        print('\tStarting with shapes')
-        print(f'\tUsing {infile.name} for parcel piercing')
+
+        logging.info('\tStarting with shapes')
+        logging.info(f'\tUsing {infile.name} for parcel piercing')
         if '.pickle' in infile.name:
             self.shapes = pickle.load(open(infile, "rb"))
         else:
             self.shapes = SHP.ShapesList(infile)
-        print(self.shapes.shape_df.columns)
+        logging.debug(self.shapes.shape_df.columns)
         self.IDs = self.shapes.shape_df[['ShapeID']].reset_index()
-        print(self.IDs)
         self.IDs.rename(columns={'ShapeID':'TempID', 'ShapeIDZ':'TempIDZ'}, inplace=True)
-        print(self.IDs)
         self.best_matches = self.IDs.copy()
         self.best_matches['matching_ShapeIDZ'] = [[list(self.best_matches['TempIDZ'])]]
         self.IDs.set_index('TempIDZ', inplace=True)
@@ -178,7 +187,7 @@ class CREDA_Project:
         # project to merge datasets
 
         # create TempIDZ
-        print('\tStarting with UBIDs')
+        logger.info('\tStarting with UBIDs')
         file_lines.reset_index(inplace=True)
         file_lines.rename(columns={'index':'TempIDZ'}, inplace=True)
         file_lines['TempIDZ'] = file_lines['TempIDZ'] + 1
@@ -199,7 +208,7 @@ class CREDA_Project:
         pass
 
     def clean_addresses(self):
-        print('\nBeginning Address cleaning step')
+        logger.info('\nBeginning Address cleaning step')
         failed_count = 0
         address_lines = self.orig_addresses.reset_index()
         address_lines['addr'] = address_lines['addr'].str.lower()
@@ -213,7 +222,8 @@ class CREDA_Project:
             failed_count = failed_count + temp.get_status()
             address_lines.iloc[idx] = row
 
-        print(address_lines[0:5])
+        logger.debug('Top 5 lines of address df')
+        logger.debug(address_lines.head())
         temp = addr_splitter.split_df_addresses(address_lines[['TempID', 'parsed_addr']])
         address_lines = pd.merge(address_lines, temp, how='inner', on='TempID')
         self.parsed_addresses = address_lines[['TempIDZ',
@@ -224,21 +234,21 @@ class CREDA_Project:
         self.TempID_errors = self.TempID_errors.drop_duplicates(subset='TempID').set_index('TempID')
         self.df_list['parsed_addresses'] = self.parsed_addresses
         self.df_list['TempID_errors'] = self.TempID_errors
-        print(f'\tFailed to parse {failed_count} addresses')
+        logger.warn(f'\tFailed to parse {failed_count} addresses')
 
     def addr_parse_report(self, outfile: str):
-        print(f'\nGenerating parse report at "{outfile}"')
+        logger.info(f'\nGenerating parse report at "{outfile}"')
         temp = pd.merge(self.orig_addresses, self.TempID_errors, how='left', left_index=True, right_index=True)
         temp.to_csv(outfile)
 
     def make_geocoder_file(self, outfile: str):
-        print(f'\nGenerating file to geocode at "{outfile}"')
+        logger.info(f'\nGenerating file to geocode at "{outfile}"')
         temp = pd.merge(self.IDs, self.parsed_addresses, how='inner', left_index=True, right_index = True)
         temp = pd.merge(temp, self.orig_addresses[['city', 'postal', 'state']], how='left', left_on='TempID', right_index=True)
         temp.to_csv(outfile)
 
     def add_geocoder_results(self, geocoder: str, filename: str):
-        print(f'\nAdding geocoding results from "{filename}"')
+        logger.info(f'\nAdding geocoding results from "{filename}"')
         validator_factory = validators.ValidatorFactory()
 
         temp_geocoder = validator_factory.create_external_validator(geocoder, filename)
@@ -302,14 +312,14 @@ class CREDA_Project:
         temp_shapefile = Path(shapefile)
         if not temp_shapefile.is_absolute():
             temp_shapefile = Path.cwd() / temp_shapefile
-        print(f'\nLoading {temp_shapefile.name} for parcel piercing')
+        logger.info(f'\nLoading {temp_shapefile.name} for parcel piercing')
         if '.pickle' in temp_shapefile.name:
             self.shapes = pickle.load(open(temp_shapefile, "rb"))
         else:
             self.shapes = SHP.ShapesList(temp_shapefile)
 
     def perform_piercing(self):
-        print('\nBeginning parcel piercing')
+        logger.info('\nBeginning parcel piercing')
         geocoders = [x[:-4] for x in self.geocoder_results.columns if "_lat" in x]
         for geocoder in geocoders:
             columns = [x for x in self.geocoder_results.columns if geocoder in x]
@@ -317,7 +327,6 @@ class CREDA_Project:
             if self.piercing_results.shape[0] > 0:
                 self.piercing_results = pd.merge(self.piercing_results, temp_pierced, how='outer', left_index=True, right_index=True)
                 self.df_list['piercing_results'] = self.piercing_results
-                print('Added')
             else:
                 self.piercing_results = temp_pierced
                 self.df_list['piercing_results'] = self.piercing_results
@@ -362,12 +371,12 @@ class CREDA_Project:
 
         if self.best_matches.shape[0] < 1:
             self.pick_best_match()
-            
+
         UBIDs = [x for y in list(self.best_matches['matching_ShapeIDZ']) for x in y]
         UBIDs = list(set(UBIDs))
         UBIDs = pd.DataFrame(UBIDs, columns=['ShapeIDZ']).set_index('ShapeIDZ')
         #We now have a DataFrame, single column, of unique ShapeIDs
-        
+
         self.UBIDs = pd.merge(UBIDs, self.shapes.shape_df[['ShapeID','polygon']], how='inner', left_index=True, right_index=True)
 
         self.UBIDs['UBID'] = self.UBIDs['polygon'].apply(SHP.get_UBID)
@@ -376,7 +385,7 @@ class CREDA_Project:
 
     def save_UBIDs(self, filename: str, data_fields = False, address_fields = False):
         if self.UBIDs.shape[0] < 1:
-            print("UBIDs haven't been generated yet")
+            logger.warn("UBIDs haven't been generated yet!")
         if data_fields:
             if address_fields:
                 temp = pd.merge(self.UBIDs, self.IDs, how='inner', left_index=True, right_index=True)
@@ -396,37 +405,32 @@ class CREDA_Project:
         temp.to_csv(filename)
 
     def save_all(self, outfile):
-        print(f'\nSaving data to {outfile}')
+        logger.info(f'\nSaving data to {outfile}')
         temp = self.IDs
-        #print(temp.head())
+        logger.debug(f'Start of ID lines:\n{temp.head()}')
         for key in self.df_list.keys():
             df = self.df_list[key]
-            #print("pass")
             if df.index.name == 'TempIDZ':
                 temp = pd.merge(temp, df, how='left', left_index=True, right_index=True)
-                #print(temp.head())
             if df.index.name == 'TempID':
                 temp = pd.merge(temp, df, how='left', left_on='TempID', right_index=True)
-                #print(temp.head())
-        #temp = temp[~temp.index.duplicated(keep='first')]
-        print(temp.columns)
+        logger.debug(f'columns in temp object after merging:\n{temp.columns}')
         if self.UBIDs.shape[0]>0:
             final_rows = []
-            
+
             temp = temp.reset_index()
             for _, row in temp[temp['matching_ShapeIDZ'].notna()].iterrows():
                 for item in row['matching_ShapeIDZ']:
                     row['single_ShapeIDZ'] = item
                     final_rows.append(row.copy())
             for _, row in temp[~temp['matching_ShapeIDZ'].notna()].iterrows():
-                #print(row)
                 final_rows.append(row.copy())
             final_df = (pd.DataFrame(final_rows))
-            
+
             #Merge with shape_df to get associate shapes
             final_df = pd.merge(final_df, self.UBIDs['ShapeID'], how = 'left', left_on='single_ShapeIDZ', right_index=True)
             final_df = pd.merge(final_df, self.UBIDs.reset_index(), how = 'left', left_on='ShapeID', right_on='ShapeID')
-        
+
         else:
             final_df = temp
         final_df.to_csv(outfile)

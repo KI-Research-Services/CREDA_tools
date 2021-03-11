@@ -14,6 +14,15 @@ import shapely.wkt
 import buildingid.code as bc
 
 logger = logging.getLogger(__name__)
+logger.setLevel(logging.INFO)
+
+filehandler = logging.FileHandler('CREDA_run.log')
+filehandler.setLevel(logging.DEBUG)
+
+streamhandler = logging.StreamHandler()
+
+logger.addHandler(filehandler)
+logger.addHandler(streamhandler)
 
 def unpack(WKT_object):
     if WKT_object.geom_type != 'Polygon':
@@ -50,9 +59,9 @@ class ShapesList():
         
         if 'PARCEL_APN' in shape_frame.columns:
             if 'ShapeID' in shape_frame.columns:
-                print('Warning: PARCEL_APN and ShapeID present. PARCEL_APN retained as data')
+                logger.warning('PARCEL_APN and ShapeID present. PARCEL_APN retained as data')
             else:
-                print('INFO: PARCEL_APN used for ShapeID')
+                logger.info('PARCEL_APN used for ShapeID')
                 shape_frame.rename(columns={'PARCEL_APN':'ShapeID'})
         
         #For each shape, change to polygon, and get min/max coords. Append to list of dictionaries
@@ -72,49 +81,41 @@ class ShapesList():
             except WKTReadingError:
                 failed_shapes.append({'ShapeID':index,'GEOM':item.GEOM})
                 
-        print("In init creating shape_df")
+        logger.info("In init creating shape_df")
         #Create dataframe for shapes, this time with min/max
         #We can probably do this with a .apply() method, but the above loop was clear enough.
         self.shape_df = pd.DataFrame.from_dict(shapes)
         self.shape_df.set_index('ShapeIDZ', inplace=True)
         self.failed_shapes = pd.DataFrame.from_dict(failed_shapes)
         for shape in list(self.failed_shapes.ShapeID):
-            self.ShapeID_flags.setdefault(ShapeID, []).append(flag
+            self.ShapeID_flags.setdefault(self.ShapeID, []).append("WKT didn't parse correctly")
         
     def process_df(self,complete_df:pd.DataFrame, validator:str, offset:float = 0):
-        print(f'\tProcessing for {validator}')
+        logger.info(f'\tProcessing for {validator}')
         results = []
         subset_df = complete_df[[f'{validator}_long',f'{validator}_lat']]
         subset_df.columns = ['long','lat']
         count = 0
         for idx, item in subset_df.iterrows():
             point = Point(item.long, item.lat)
-            #print(point)
-            #print(f'Item long and lat are {item.long} {item.lat}')
             bounded_xy = []
             pierced = []
-            #print(f'Shape of shape_df is {self.shape_df.shape}')
             filtered_shapes = self.shape_df[(self.shape_df.minx - offset < item.long) &
                            (self.shape_df.maxx + offset > item.long) &
                            (self.shape_df.miny - offset < item.lat) &
                            (self.shape_df.maxy + offset > item.lat)]
-            #print(f'Shape of filtered_shapes is {filtered_shapes.shape}')
             for ShapeIDZ, shape in filtered_shapes.iterrows():
                 polygon = shapely.wkt.loads(shape.polygon)
-                #print(f"Before within {polygon}")
                 if point.within(polygon): #If it pierces the shape, add to the pierced list
-                    #print("In within")
                     if ShapeIDZ not in pierced:
                         pierced.append(ShapeIDZ)
                 else: #otherwise add it to the bounded list
                     if ShapeIDZ not in bounded_xy:
                         bounded_xy.append(ShapeIDZ)
-            #Not false positive or pierced
             if (len(pierced) == 0) and (filtered_shapes.shape[0]>0):
                 nearest = nearest_neighbor(point, filtered_shapes)
                 pierced.append(nearest)
                 bounded_xy.remove(nearest)
-            #Get counds of each list
             pierced_count = len(pierced)
                 
             #Model results
