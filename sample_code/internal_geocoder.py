@@ -22,3 +22,4 @@ project.perform_piercing()
 # We are only using a single geocoder, so this step will be fast.
 project.pick_best_match()
 project.generate_UBIDs()
+project.save_all('result.csv')
