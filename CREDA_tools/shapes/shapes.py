@@ -13,16 +13,16 @@ import shapely.wkt
 
 import buildingid.code as bc
 
-logger = logging.getLogger(__name__)
-logger.setLevel(logging.INFO)
+#logger = logging.getLogger(__name__)
+#logger.setLevel(logging.INFO)
 
-filehandler = logging.FileHandler('CREDA_run.log')
-filehandler.setLevel(logging.DEBUG)
+#filehandler = logging.FileHandler('CREDA_run.log')
+#filehandler.setLevel(logging.DEBUG)
 
-streamhandler = logging.StreamHandler()
+#streamhandler = logging.StreamHandler()
 
-logger.addHandler(filehandler)
-logger.addHandler(streamhandler)
+#logger.addHandler(filehandler)
+#logger.addHandler(streamhandler)
 
 def unpack(WKT_object):
     if WKT_object.geom_type != 'Polygon':
@@ -58,12 +58,13 @@ class ShapesList():
         ShapeIDZ = 0
         
         if 'PARCEL_APN' in shape_frame.columns:
+            '''
             if 'ShapeID' in shape_frame.columns:
-                logger.warning('PARCEL_APN and ShapeID present. PARCEL_APN retained as data')
+                #logger.warning('PARCEL_APN and ShapeID present. PARCEL_APN retained as data')
             else:
-                logger.info('PARCEL_APN used for ShapeID')
+                #logger.info('PARCEL_APN used for ShapeID')
                 shape_frame.rename(columns={'PARCEL_APN':'ShapeID'})
-        
+            '''
         #For each shape, change to polygon, and get min/max coords. Append to list of dictionaries
         for idx, item in shape_frame.iterrows():
             if 'ShapeID' in shape_frame.columns:
@@ -80,9 +81,9 @@ class ShapesList():
                     ShapeIDZ = ShapeIDZ + 1
             except WKTReadingError:
                 failed_shapes.append({'ShapeID':index,'GEOM':item.GEOM})
-                logger.exception(f'shapeID {index} failed parsing')
+                #logger.exception(f'shapeID {index} failed parsing')
                 
-        logger.info("In init creating shape_df")
+        #logger.info("In init creating shape_df")
         #Create dataframe for shapes, this time with min/max
         #We can probably do this with a .apply() method, but the above loop was clear enough.
         self.shape_df = pd.DataFrame.from_dict(shapes)
@@ -94,7 +95,7 @@ class ShapesList():
         '''
         
     def process_df(self,complete_df:pd.DataFrame, validator:str, offset:float = 0):
-        logger.info(f'\tProcessing for {validator}')
+        #logger.info(f'\tProcessing for {validator}')
         results = []
         subset_df = complete_df[[f'{validator}_long',f'{validator}_lat']]
         subset_df.columns = ['long','lat']

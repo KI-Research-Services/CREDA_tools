@@ -22,16 +22,16 @@ from CREDA_tools.shapes import shapes as SHP
 
 pd.options.mode.chained_assignment = None
 
-logger = logging.getLogger(__name__)
-logger.setLevel(logging.INFO)
+#logger = logging.getLogger(__name__)
+#logger.setLevel(logging.INFO)
 
-filehandler = logging.FileHandler('CREDA_run.log')
-filehandler.setLevel(logging.DEBUG)
+#filehandler = logging.FileHandler('CREDA_run.log')
+#filehandler.setLevel(logging.DEBUG)
 
-streamhandler = logging.StreamHandler(logging.INFO)
+#streamhandler = logging.StreamHandler(logging.INFO)
 
-logger.addHandler(filehandler)
-logger.addHandler(streamhandler)
+#logger.addHandler(filehandler)
+#logger.addHandler(streamhandler)
 
 
 
@@ -187,7 +187,7 @@ class CREDA_Project:
         # project to merge datasets
 
         # create TempIDZ
-        logger.info('\tStarting with UBIDs')
+        #logger.info('\tStarting with UBIDs')
         file_lines.reset_index(inplace=True)
         file_lines.rename(columns={'index':'TempIDZ'}, inplace=True)
         file_lines['TempIDZ'] = file_lines['TempIDZ'] + 1
@@ -208,7 +208,7 @@ class CREDA_Project:
         pass
 
     def clean_addresses(self):
-        logger.info('\nBeginning Address cleaning step')
+        #logger.info('\nBeginning Address cleaning step')
         failed_count = 0
         address_lines = self.orig_addresses.reset_index()
         address_lines['addr'] = address_lines['addr'].str.lower()
@@ -222,8 +222,8 @@ class CREDA_Project:
             failed_count = failed_count + temp.get_status()
             address_lines.iloc[idx] = row
 
-        logger.debug('Top 5 lines of address df')
-        logger.debug(address_lines.head())
+        #logger.debug('Top 5 lines of address df')
+        #logger.debug(address_lines.head())
         temp = addr_splitter.split_df_addresses(address_lines[['TempID', 'parsed_addr']])
         address_lines = pd.merge(address_lines, temp, how='inner', on='TempID')
         self.parsed_addresses = address_lines[['TempIDZ',
@@ -234,21 +234,21 @@ class CREDA_Project:
         self.TempID_errors = self.TempID_errors.drop_duplicates(subset='TempID').set_index('TempID')
         self.df_list['parsed_addresses'] = self.parsed_addresses
         self.df_list['TempID_errors'] = self.TempID_errors
-        logger.warn(f'\tFailed to parse {failed_count} addresses')
+        #logger.warn(f'\tFailed to parse {failed_count} addresses')
 
     def addr_parse_report(self, outfile: str):
-        logger.info(f'\nGenerating parse report at "{outfile}"')
+        #logger.info(f'\nGenerating parse report at "{outfile}"')
         temp = pd.merge(self.orig_addresses, self.TempID_errors, how='left', left_index=True, right_index=True)
         temp.to_csv(outfile)
 
     def make_geocoder_file(self, outfile: str):
-        logger.info(f'\nGenerating file to geocode at "{outfile}"')
+        #logger.info(f'\nGenerating file to geocode at "{outfile}"')
         temp = pd.merge(self.IDs, self.parsed_addresses, how='inner', left_index=True, right_index = True)
         temp = pd.merge(temp, self.orig_addresses[['city', 'postal', 'state']], how='left', left_on='TempID', right_index=True)
         temp.to_csv(outfile)
 
     def add_geocoder_results(self, geocoder: str, filename: str):
-        logger.info(f'\nAdding geocoding results from "{filename}"')
+        #logger.info(f'\nAdding geocoding results from "{filename}"')
         validator_factory = validators.ValidatorFactory()
 
         temp_geocoder = validator_factory.create_external_validator(geocoder, filename)
@@ -312,14 +312,14 @@ class CREDA_Project:
         temp_shapefile = Path(shapefile)
         if not temp_shapefile.is_absolute():
             temp_shapefile = Path.cwd() / temp_shapefile
-        logger.info(f'\nLoading {temp_shapefile.name} for parcel piercing')
+        #logger.info(f'\nLoading {temp_shapefile.name} for parcel piercing')
         if '.pickle' in temp_shapefile.name:
             self.shapes = pickle.load(open(temp_shapefile, "rb"))
         else:
             self.shapes = SHP.ShapesList(temp_shapefile)
 
     def perform_piercing(self):
-        logger.info('\nBeginning parcel piercing')
+        #logger.info('\nBeginning parcel piercing')
         geocoders = [x[:-4] for x in self.geocoder_results.columns if "_lat" in x]
         for geocoder in geocoders:
             columns = [x for x in self.geocoder_results.columns if geocoder in x]
@@ -384,8 +384,8 @@ class CREDA_Project:
         #self.df_list['UBIDs'] = self.UBIDs
 
     def save_UBIDs(self, filename: str, data_fields = False, address_fields = False):
-        if self.UBIDs.shape[0] < 1:
-            logger.warn("UBIDs haven't been generated yet!")
+        #if self.UBIDs.shape[0] < 1:
+            #logger.warn("UBIDs haven't been generated yet!")
         if data_fields:
             if address_fields:
                 temp = pd.merge(self.UBIDs, self.IDs, how='inner', left_index=True, right_index=True)
@@ -405,16 +405,16 @@ class CREDA_Project:
         temp.to_csv(filename)
 
     def save_all(self, outfile):
-        logger.info(f'\nSaving data to {outfile}')
+        #logger.info(f'\nSaving data to {outfile}')
         temp = self.IDs
-        logger.debug(f'Start of ID lines:\n{temp.head()}')
+        #logger.debug(f'Start of ID lines:\n{temp.head()}')
         for key in self.df_list.keys():
             df = self.df_list[key]
             if df.index.name == 'TempIDZ':
                 temp = pd.merge(temp, df, how='left', left_index=True, right_index=True)
             if df.index.name == 'TempID':
                 temp = pd.merge(temp, df, how='left', left_on='TempID', right_index=True)
-        logger.debug(f'columns in temp object after merging:\n{temp.columns}')
+        #logger.debug(f'columns in temp object after merging:\n{temp.columns}')
         if self.UBIDs.shape[0]>0:
             final_rows = []
 
