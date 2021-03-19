@@ -334,7 +334,8 @@ class CREDA_Project:
                 self.piercing_results = temp_pierced
                 self.df_list['piercing_results'] = self.piercing_results
     
-    
+    def save_shapes(self, filename):
+        self.shapes.shape_df.to_csv(filename)
 
     def save_piercing(self, filename: str, data_fields = False, address_fields = False):
         if 'piercing_results' not in self.df_list.keys():
