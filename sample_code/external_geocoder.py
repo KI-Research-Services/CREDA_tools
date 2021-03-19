@@ -20,7 +20,7 @@ project.make_geocoder_file("for_geocoding.csv")
 #####Run Geocoding on for_geocoding.csv #####
 
 project.add_geocoder_results('ArcGIS', 'test_data/Arc_output.csv')
-
+project.save_geocoding('test.csv')
 
 #Run rest of steps to UBIDs on dataset 1
 project.assign_shapefile("test_data/san_jose_shapes.csv")
