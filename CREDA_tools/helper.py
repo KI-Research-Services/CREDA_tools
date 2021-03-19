@@ -34,7 +34,6 @@ pd.options.mode.chained_assignment = None
 #logger.addHandler(streamhandler)
 
 
-
 def simple_max(row, geocoders):
     found = False
     best_geocoder = ""
@@ -93,9 +92,14 @@ class CREDA_Project:
     TempIDZ_errors = pd.DataFrame()
     shapes = pd.DataFrame()
     UBIDs = pd.DataFrame()
+    
+    df_list = dict.fromkeys(['TempIDZ','TempID','orig_addresses','parsed_addresses',
+                             'geocoder_results','piercing_results','best_matches',
+                             'UBIDs','TempID_errors','TempIDZ_errors','data_lines'],
+                            pd.DataFrame())
 
     def __init__(self, entry, filename: str, geocoder='base'):
-        logging.info('\nInitializing run')
+        #logger.info('\nInitializing run')
         pd.set_option('max_columns', 10)
         infile_path = Path(filename)
 
@@ -106,11 +110,10 @@ class CREDA_Project:
             infile_path = Path.cwd() / infile_path
 
         self.entry = entry
-        self.df_list = {}
         self.config = configparser.ConfigParser()
         if Path.exists(Path.cwd() / 'config.ini'):
             self.config.read('config.ini')
-            logging.info("\tUsing user-provided config.ini file")
+            #logger.info("\tUsing user-provided config.ini file")
 
         if entry == 'addresses':
             self._address_entry(infile_path)
@@ -119,11 +122,11 @@ class CREDA_Project:
         elif entry == 'parcels':
             self._parcel_entry(infile_path)
         else:
-            logging.info('Valid entry types are "addresses", "geocodes", and "parcels"')
+            #logger.info('Valid entry types are "addresses", "geocodes", and "parcels"')
             raise ValueError(f'{entry} not a valid entry type.')
 
     def _address_entry(self, infile_path):
-        logging.info('\tStarting with addresses')
+        #logger.info('\tStarting with addresses')
         file_lines = pd.read_csv(infile_path)
         file_lines.reset_index(inplace=True)
         file_lines.rename(columns={'index':'TempID'}, inplace=True)
@@ -140,7 +143,7 @@ class CREDA_Project:
         self.df_list['data_lines'] = self.data_lines
 
     def _geocodes_entry(self, infile_path, geocoder='base'):
-        logging.info('\tStarting with geocodes')
+        #logger.info('\tStarting with geocodes')
         file_lines = pd.read_csv(infile_path)
         for x in ['lat','long','confidence']:
             if x not in file_lines.columns:
@@ -151,7 +154,7 @@ class CREDA_Project:
         if 'TempIDZ' not in file_lines.columns:
             file_lines.reset_index(inplace=True)
             file_lines.rename(columns={'index':'TempIDZ'}, inplace=True)
-        logging.debug(file_lines.columns)
+        #logger.debug(file_lines.columns)
         if not 'TempID' in file_lines.columns:
             file_lines['TempID'] = file_lines['TempIDZ']
         self.geocoder_results = file_lines[['TempIDZ','lat','long','confidence']].copy().set_index('TempIDZ')
@@ -166,19 +169,21 @@ class CREDA_Project:
         # This will have to accept TempID and geometry
         # It will produce TempIDZ, ShapeID, min/max fields, center fields
 
-        logging.info('\tStarting with shapes')
-        logging.info(f'\tUsing {infile.name} for parcel piercing')
+        #logger.info('\tStarting with shapes')
+        #logger.info(f'\tUsing {infile.name} for parcel piercing')
         if '.pickle' in infile.name:
             self.shapes = pickle.load(open(infile, "rb"))
         else:
             self.shapes = SHP.ShapesList(infile)
-        logging.debug(self.shapes.shape_df.columns)
+        #logger.debug(self.shapes.shape_df.columns)
         self.IDs = self.shapes.shape_df[['ShapeID']].reset_index()
         self.IDs.rename(columns={'ShapeID':'TempID', 'ShapeIDZ':'TempIDZ'}, inplace=True)
         self.best_matches = self.IDs.copy()
-        self.best_matches['matching_ShapeIDZ'] = [[list(self.best_matches['TempIDZ'])]]
+        # self.best_matches['matching_ShapeIDZ'] = [[list(self.best_matches['TempIDZ'])]]
+        self.best_matches['matching_ShapeIDZ'] = [[x] for x in self.best_matches['TempIDZ']]
         self.IDs.set_index('TempIDZ', inplace=True)
         self.best_matches.set_index('TempIDZ', inplace=True)
+        self.df_list['best_matches'] = self.best_matches
 
 
     def _UBIDs_entry(self, file_lines):
@@ -288,23 +293,21 @@ class CREDA_Project:
         self.df_list['geocoder_results'] = self.geocoder_results
 
     def save_geocoding(self, filename: str, data_fields = False, address_fields = False):
+        if 'geocoder_results' not in self.df_list.keys():
+            #logger.warning('No geocoding to save.')
+            return
+        field_list = ['geocoder_results']
         if data_fields:
-            if address_fields:
-                temp = pd.merge(self.geocoder_results, self.IDs, how='inner', left_index=True, right_index=True)
-                temp = pd.merge(temp, self.parsed_addresses, how = 'inner', left_index = True, right_index = True)
-                temp = pd.merge(temp, self.orig_addresses, how='inner', left_on='TempID', right_index=True)
-                temp = pd.merge(temp, self.data_lines, how='inner', left_on='TempID', right_index = True)
+            if not self.df_list['data_fields'].empty:
+                field_list.append('data_fields')
             else:
-                temp = pd.merge(self.geocoder_results, self.IDs, how='inner', left_index=True, right_index=True)
-                temp = pd.merge(temp, self.data_lines, how='inner', left_on='TempID', right_index = True)
-        else:
-            if address_fields:
-                temp = pd.merge(self.geocoder_results, self.IDs, how='inner', left_index=True, right_index=True)
-                temp = pd.merge(temp, self.parsed_addresses, how = 'inner', left_index = True, right_index = True)
-                temp = pd.merge(temp, self.orig_addresses, how='inner', left_on='TempID', right_index=True)
+                print('Cannot add data fields as it is not initialized')
+        if address_fields:
+            if not self.df_list['orig_addresses'].empty:
+                field_list.append('orig_addresses')
             else:
-                temp = self.geocoder_results
-        temp.to_csv(filename)
+                print('Cannot add addresses as they have not initialized')
+        self.save_all(filename, field_list)
 
 
     def assign_shapefile(self, shapefile: str):
@@ -330,25 +333,25 @@ class CREDA_Project:
             else:
                 self.piercing_results = temp_pierced
                 self.df_list['piercing_results'] = self.piercing_results
+    
+    
 
     def save_piercing(self, filename: str, data_fields = False, address_fields = False):
+        if 'piercing_results' not in self.df_list.keys():
+            #logger.warning('No piercing yet to save.')
+            return
+        field_list = ['piercing_results']
         if data_fields:
-            if address_fields:
-                temp = pd.merge(self.piercing_results, self.IDs, how='inner', left_index=True, right_index=True)
-                temp = pd.merge(temp, self.parsed_addresses, how = 'inner', left_index = True, right_index = True)
-                temp = pd.merge(temp, self.orig_addresses, how='inner', left_on='TempID', right_index=True)
-                temp = pd.merge(temp, self.data_lines, how='inner', left_on='TempID', right_index = True)
+            if not self.df_list['data_fields'].empty:
+                field_list.append('data_fields')
             else:
-                temp = pd.merge(self.piercing_results, self.IDs, how='inner', left_index=True, right_index=True)
-                temp = pd.merge(temp, self.data_lines, how='inner', left_on='TempID', right_index = True)
-        else:
-            if address_fields:
-                temp = pd.merge(self.piercing_results, self.IDs, how='inner', left_index=True, right_index=True)
-                temp = pd.merge(temp, self.parsed_addresses, how = 'inner', left_index = True, right_index = True)
-                temp = pd.merge(temp, self.orig_addresses, how='inner', left_on='TempID', right_index=True)
+                print('Cannot add data fields as it is not initialized')
+        if address_fields:
+            if not self.df_list['orig_addresses'].empty:
+                field_list.append('orig_addresses')
             else:
-                temp = self.piercing_results
-        temp.to_csv(filename)
+                print('Cannot add addresses as they have not initialized')
+        self.save_all(filename, field_list)
 
     def pick_best_match(self, func=None):
         if func is None:
@@ -384,41 +387,40 @@ class CREDA_Project:
         #self.df_list['UBIDs'] = self.UBIDs
 
     def save_UBIDs(self, filename: str, data_fields = False, address_fields = False):
-        #if self.UBIDs.shape[0] < 1:
-            #logger.warn("UBIDs haven't been generated yet!")
+        if 'geocoder_results' not in self.df_list.keys():
+            #logger.warning('No UBIDs to save.')
+            return
+        field_list = ['UBIDs']
         if data_fields:
-            if address_fields:
-                temp = pd.merge(self.UBIDs, self.IDs, how='inner', left_index=True, right_index=True)
-                temp = pd.merge(temp, self.parsed_addresses, how = 'inner', left_index = True, right_index = True)
-                temp = pd.merge(temp, self.orig_addresses, how='inner', left_on='TempID', right_index=True)
-                temp = pd.merge(temp, self.data_lines, how='inner', left_on='TempID', right_index = True)
+            if not self.df_list['data_fields'].empty:
+                field_list.append('data_fields')
             else:
-                temp = pd.merge(self.UBIDs, self.IDs, how='inner', left_index=True, right_index=True)
-                temp = pd.merge(temp, self.data_lines, how='inner', left_on='TempID', right_index = True)
-        else:
-            if address_fields:
-                temp = pd.merge(self.UBIDs, self.IDs, how='inner', left_index=True, right_index=True)
-                temp = pd.merge(temp, self.parsed_addresses, how = 'inner', left_index = True, right_index = True)
-                temp = pd.merge(temp, self.orig_addresses, how='inner', left_on='TempID', right_index=True)
+                print('Cannot add data fields as it is not initialized')
+        if address_fields:
+            if not self.df_list['orig_addresses'].empty:
+                field_list.append('orig_addresses')
             else:
-                temp = self.UBIDs
-        temp.to_csv(filename)
+                print('Cannot add addresses as they have not initialized')
+        self.save_all(filename, field_list)
 
-    def save_all(self, outfile):
+    def save_all(self, outfile, field_list=None):
         #logger.info(f'\nSaving data to {outfile}')
         temp = self.IDs
         #logger.debug(f'Start of ID lines:\n{temp.head()}')
-        for key in self.df_list.keys():
+        if not field_list:
+            field_list = self.df_list.keys()
+        for key in field_list:
             df = self.df_list[key]
-            if df.index.name == 'TempIDZ':
-                temp = pd.merge(temp, df, how='left', left_index=True, right_index=True)
-            if df.index.name == 'TempID':
-                temp = pd.merge(temp, df, how='left', left_on='TempID', right_index=True)
+            if not df.empty:
+                if df.index.name == 'TempIDZ':
+                    temp = pd.merge(temp, df, how='left', left_index=True, right_index=True)
+                if df.index.name == 'TempID':
+                    temp = pd.merge(temp, df, how='left', left_on='TempID', right_index=True)
         #logger.debug(f'columns in temp object after merging:\n{temp.columns}')
         if self.UBIDs.shape[0]>0:
             final_rows = []
-
             temp = temp.reset_index()
+            print(temp.columns)
             for _, row in temp[temp['matching_ShapeIDZ'].notna()].iterrows():
                 for item in row['matching_ShapeIDZ']:
                     row['single_ShapeIDZ'] = item
