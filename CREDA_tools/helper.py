@@ -188,6 +188,7 @@ class CREDA_Project:
         self.IDs = self.shapes.shape_df[['ShapeID']].reset_index()
         self.IDs.rename(columns={'ShapeID':'TempID', 'ShapeIDZ':'TempIDZ'}, inplace=True)
         self.best_matches = self.IDs.copy()
+        
         # self.best_matches['matching_ShapeIDZ'] = [[list(self.best_matches['TempIDZ'])]]
         self.best_matches['matching_ShapeIDZ'] = [[x] for x in self.best_matches['TempIDZ']]
         self.IDs.set_index('TempIDZ', inplace=True)
@@ -333,6 +334,8 @@ class CREDA_Project:
     def perform_piercing(self):
         logger.info('\nBeginning parcel piercing')
         geocoders = [x[:-4] for x in self.geocoder_results.columns if "_lat" in x]
+        self.piercing_results = pd.DataFrame()
+        logger.warning('Already had piercing results. Piercing results are overwritten when rerun.')
         for geocoder in geocoders:
             columns = [x for x in self.geocoder_results.columns if geocoder in x]
             temp_pierced = self.shapes.process_df(self.geocoder_results[columns], geocoder, offset=0.0005)
