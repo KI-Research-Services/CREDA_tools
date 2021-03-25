@@ -33,10 +33,15 @@ file_handler.setFormatter(formatter)
 
 stream_handler = logging.StreamHandler()
 stream_handler.setFormatter(formatter)
-stream_handler.setLevel(logging.INFO)
 
 logger.addHandler(file_handler)
 logger.addHandler(stream_handler)
+
+def setSilent():
+    logger.setLevel(logging.ERROR)
+
+def setVerbose():
+    logger.setLevel(logging.INFO)
 
 def simple_max(row, geocoders):
     found = False
