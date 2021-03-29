@@ -104,7 +104,7 @@ class CREDA_Project:
     
     df_list = dict.fromkeys(['TempIDZ','TempID','orig_addresses','parsed_addresses',
                              'geocoder_results','piercing_results','best_matches',
-                             'UBIDs','TempID_errors','TempIDZ_errors','data_lines'],
+                             'UBIDs','TempID_errors','TempIDZ_errors','data_fields'],
                             pd.DataFrame())
 
     def __init__(self, entry, filename: str, geocoder='base'):
@@ -146,10 +146,10 @@ class CREDA_Project:
         address_lines = file_lines[['TempID', 'addr', 'city', 'postal', 'state']].copy()
         address_lines = address_lines.fillna('')
         self.orig_addresses = address_lines.copy().set_index('TempID')
-        self.data_lines = file_lines.drop(columns=['addr', 'city', 'postal',
+        self.data_fields = file_lines.drop(columns=['addr', 'city', 'postal',
                                                    'state']).copy().set_index('TempID')
         self.df_list['orig_addresses'] = self.orig_addresses
-        self.df_list['data_lines'] = self.data_lines
+        self.df_list['data_fields'] = self.data_fields
 
     def _geocodes_entry(self, infile_path, geocoder='base'):
         logger.info('\tStarting with geocodes')
@@ -168,11 +168,11 @@ class CREDA_Project:
             file_lines['TempID'] = file_lines['TempIDZ']
         self.geocoder_results = file_lines[['TempIDZ','lat','long','confidence']].copy().set_index('TempIDZ')
         self.geocoder_results.columns=[f'{geocoder}_lat',f'{geocoder}_long',f'{geocoder}_confidence']
-        self.data_lines = file_lines.drop(columns=['TempIDZ', 'lat', 'long',
+        self.data_fields = file_lines.drop(columns=['TempIDZ', 'lat', 'long',
                                                    'confidence']).copy().set_index('TempID')
         self.IDs = file_lines[['TempID', 'TempIDZ']].set_index('TempIDZ')
         self.df_list['geocoder_results'] = self.geocoder_results
-        self.df_list['data_lines'] = self.data_lines
+        self.df_list['data_fields'] = self.data_fields
 
     def _parcel_entry(self, infile):
         # This will have to accept TempID and geometry
@@ -214,10 +214,10 @@ class CREDA_Project:
             UBID_lines['TempID'] = UBID_lines['TempIDZ']
 
         self.UBIDs = UBID_lines.copy().set_index('TempIDZ')
-        self.data_lines = file_lines.drop(columns=['TempIDZ', 'UBID']).copy().set_index('TempID')
+        self.data_fields = file_lines.drop(columns=['TempIDZ', 'UBID']).copy().set_index('TempID')
         self.IDs = UBID_lines[['TempID', 'TempIDZ']].set_index('TempIDZ')
         self.df_list['UBIDs'] = self.UBIDs
-        self.df_list['data_lines'] = self.data_lines
+        self.df_list['data_fields'] = self.data_fields
 
     def _get_geocoding_errors():
         pass
@@ -334,8 +334,9 @@ class CREDA_Project:
     def perform_piercing(self):
         logger.info('\nBeginning parcel piercing')
         geocoders = [x[:-4] for x in self.geocoder_results.columns if "_lat" in x]
+        if self.piercing_results.shape[0]>0:
+            logger.warning('Already had piercing results. Piercing results are overwritten when rerun.')
         self.piercing_results = pd.DataFrame()
-        logger.warning('Already had piercing results. Piercing results are overwritten when rerun.')
         for geocoder in geocoders:
             columns = [x for x in self.geocoder_results.columns if geocoder in x]
             temp_pierced = self.shapes.process_df(self.geocoder_results[columns], geocoder, offset=0.0005)
@@ -469,8 +470,8 @@ class CREDA_Project:
         results.index.rename('TempIDZ', inplace=True)
         results.reset_index()
 
-        results = pd.merge(results, self.data_lines, how='left', left_on='TempIDZ', right_index=True)
-        results = pd.merge(results, other.data_lines, how='left', left_on='MatchIDZ', right_index=True)
+        results = pd.merge(results, self.data_fields, how='left', left_on='TempIDZ', right_index=True)
+        results = pd.merge(results, other.data_fields, how='left', left_on='MatchIDZ', right_index=True)
 
         results = pd.merge(results, self.parsed_addresses[['single_address']], how='left', left_on='TempIDZ', right_index=True)
         results = pd.merge(results, other.parsed_addresses[['single_address']], how='left', left_on='MatchIDZ', right_index=True)
