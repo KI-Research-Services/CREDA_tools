@@ -29,19 +29,19 @@ class GenericValidator(validators.AddressValidator):
         None.
 
         '''
+        print('Using generic geocoder')
         if os.path.exists(self.geocode_file):
             geocode_results = pd.read_csv(self.geocode_file)
             if 'TempIDZ' not in geocode_results.columns:
                 geocode_results.reset_index(inplace=True)
                 geocode_results.rename(columns={'index':'TempIDZ'}, inplace=True)
-            geocode_results = geocode_results[['TempIDZ', 'lat', 'long', 'confidence']]
-            geocode_results.rename(columns={'lat':f'{self.validator_type}_lat',
-                                            'long':f'{self.validator_type}_long',
-                                            'confidence': f'{self.validator_type}_confidence'},
-                                   inplace=True)
+            
             geocode_results.set_index('TempIDZ', inplace=True)
-            self.address_df = geocode_results[[f'{self.validator_type}_lat',
-                                               f'{self.validator_type}_long',
-                                               f'{self.validator_type}_confidence']]
+            cols_to_move = ['lat', 'long', 'confidence']
+            geocode_results = geocode_results[cols_to_move + [col for col in geocode_results.columns if col not in cols_to_move]]
+            geocode_results.columns = [f'{self.validator_type}_{col}' for col in geocode_results.columns]
+            
+            self.address_df = geocode_results
+            
         else:
             print(f'Failed to find file {self.geocode_file}')
