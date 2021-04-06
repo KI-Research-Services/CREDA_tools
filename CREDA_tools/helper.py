@@ -101,6 +101,7 @@ class CREDA_Project:
     TempIDZ_errors = pd.DataFrame()
     shapes = pd.DataFrame()
     UBIDs = pd.DataFrame()
+    past_clean = True
     
     df_list = dict.fromkeys(['TempIDZ','TempID','orig_addresses','parsed_addresses',
                              'geocoder_results','piercing_results','best_matches',
@@ -136,6 +137,7 @@ class CREDA_Project:
 
     def _address_entry(self, infile_path):
         logger.info('\tStarting with addresses')
+        self.past_clean = False
         file_lines = pd.read_csv(infile_path)
         file_lines.reset_index(inplace=True)
         file_lines.rename(columns={'index':'TempID'}, inplace=True)
@@ -419,6 +421,9 @@ class CREDA_Project:
 
     def save_all(self, outfile, field_list=None):
         logger.info(f'\nSaving data to {outfile}')
+        if not self.past_clean:
+            logger.error('ERROR. Please run clean_addresses before saving')
+            return
         temp = self.IDs
         logger.debug(f'Start of ID lines:\n{temp.head()}')
         if not field_list:

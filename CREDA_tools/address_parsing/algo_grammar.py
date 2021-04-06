@@ -40,6 +40,7 @@ class AddrParser:
         self.city = city
         self.postal = postal
         address = address.strip()
+        address = address.replace("'", "")
         address = re.sub('\\.', '', address)
         if address == '':
             self.flags.append(AddrParser.Token('Err_00', typ='flag'))
