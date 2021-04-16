@@ -200,16 +200,20 @@ project = helper.CREDA_Project("parcels",<in_file>)
 ```
 Here, <in_file> is the name of the shape file, formatted according to the specifications outlined for _shapefile_ above (see "Parcel Piercing"). Unless a 'ShapeID' field is included, the project will automatically assign a ShapeID to every row of data (i.e., every WKT string). In addition, any WKT string containing more than one polygon will be expanded into its constituents and each will be assigned a unique ShapeIDZ. As emphasized earlier, and unless necessary for the specific use case, we encourage users to preprocess shape files to eliminate near-duplicates and incorporate any relationships across rows (i.e., shapes) using common ShapeID entries.
 
-Addresses should now be matched to the ShapeIDs from the Shapefile. As parcel shapes and property boundaries may change over time, we recommend a final switch to DOE UBIDs for the highest-confidence unique identifier for a property. This also allows for efficient joining with other data sets with UBID property values via Jaccard index.
+After instantiating the shape file data structure in _project_, UBIDs can be assigned to *all* shapes by running the ``generate_UBIDs()`` command. E.g., 
 ```
 project.generate_UBIDs()
 ```
+As discussed earlier, an output of the results can be generated using the ``save_all`` method or the ``save_UBIDs`` method.
+
+<---
 After you have generated UBIDs, you can save the completed UBID results with the save_UBIDs() command. This takes a filename as input, and has two optional inputs for whether you want the data fields and address fields exported as well.
 ```
 project.save_UBIDs('some_file.csv')
 # Or you can include optional fields
 project.save_UBIDs('some_file.csv', address_fields=True, data_fields_False)
 ```
+--->
 
 #### Adding additional datasets
 To combine multiple datasets, this process can be completed on another file, followed by a jaccard score match. For example:
