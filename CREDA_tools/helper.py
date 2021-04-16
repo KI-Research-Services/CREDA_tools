@@ -252,6 +252,7 @@ class CREDA_Project:
         self.df_list['parsed_addresses'] = self.parsed_addresses
         self.df_list['TempID_errors'] = self.TempID_errors
         logger.warn(f'\tFailed to parse {failed_count} addresses')
+        self.past_clean = True
 
     def addr_parse_report(self, outfile: str):
         logger.info(f'\nGenerating parse report at "{outfile}"')
