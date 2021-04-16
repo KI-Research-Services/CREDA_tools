@@ -209,6 +209,14 @@ As discussed earlier, an output of the results can be generated using the ``save
 
 
 ## Matching on UBIDs
+To allow users to merge data sets using UBID identifiers, we incorporated into CREDA_tools the Department of Energy's code for determining geospatial overlap (specifically, their ``--left-group-by-jaccard`` and ``--right-group-by-jaccard`` functions). Our version of this tool matches a row in one CSV file with a row in another CSV file if the geospatial overlap of their respective UBID identifiers exceeds some threshold fraction of their combined areas. This is also known as an intersection over union ratio or the Jaccard index of the two regions. The merge can be performed without instantiating a project object, but first one must run ``from CREDA_tools import helper`` if it was not previously run during the session. Usage is as follows:
+```
+helper.jaccard_combine(<in_file1>, <in_file2>, threshold, <out_file>)
+```
+where <in_file1> and <in_file2> are CSV files, each containing a 'UBID' field with UBID identifiers. The two input files can contain auxiliary data (useful for linking back to source data sets). The argument _threshold_ should be a real number between 0 and 1 and represents a minimum Jaccard index for determining a match between two geospatial regions (we have had good success using 0.65). <out_file> is the output file name. Each row in <out_file> contains a row from <in_file1> matched to a row in <in_file2> (a many-to-many merge) and all auxiliary data fields from both sources are included (fields in the input files with identical names are renamed with an _x_ and _y_ subscript, corresponding to <in_file1> and <in_file2>, respectively). <out_file> also includes two additional fields called 
+
+
+
 
 
 
