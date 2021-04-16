@@ -1,6 +1,6 @@
 # CREDA Tools
 
-This repository contains the primary code base for the [CREDA Project](https://kenaninstitute.unc.edu/publication/commercial-real-estate-data-towards-parity-with-other-asset-classes-a-report-on-the-progress-of-the-commercial-real-estate-data-alliance-creda/) at UNC's [Kenan Institute for Private Enterprise](https://kenaninstitute.unc.edu/). This code is specifically meant to take various commercial real estate data sources, identifying properties by addresses, to joining datasets via DOE UBIDs.
+This repository contains the primary code base for the [CREDA Project](https://kenaninstitute.unc.edu/publication/commercial-real-estate-data-towards-parity-with-other-asset-classes-a-report-on-the-progress-of-the-commercial-real-estate-data-alliance-creda/) at UNC's [Kenan Institute for Private Enterprise](https://kenaninstitute.unc.edu/). This code is specifically meant to take various commercial real estate data sources, identifying properties by addresses, to joining datasets via DOE UBIDs. We ask users of this repository to please cite our work (e.g., Fisher, D. and Sagi, J.S. (2021), CREDA_tools: Linking address records through geospatial identifiers. https://github.com/KI-Research-Services/CREDA_tools).  
 
 ## CREDA Mission Statement
 
@@ -82,7 +82,7 @@ project = helper.CREDA_Project(<task_type>, <in_file>)
 
 Once a project has been instantiated, several function can be applied to the created object to achieve the desired result (e.g., cleaning addresses, associating geocodes with shapes, etc.). In what follows, we provide details on each of the main tasks described above. 
 
-## Addresses list expansion
+## Address list expansion
 
 In many commercial real estate data sets, the address field for a "property" record contains items such as "1650 - 1750 S. Babcock Avenue" or "1610-1650 Bienvenue Road", each of which refers to a _list_ of addresses rather than a single address. When linking or merging data sets, or simply looking for related records within the same data set (e.g., repeat sales transactions), it seems useful to allow for partial overlap. For instance, a record referring to "1650 - 1750 S. Babcock Avenue" might have some relationship to one referring to "1700 S. Babcock Avenue". The tool we developed and describe in this section are meant for expanding such address references into address lists. We are not aware of the availability of similar tools. 
 
@@ -109,7 +109,7 @@ As its syntax suggests, the output of this file can be fed to a geocoder or addr
 This tool is still under development and offered "as is" in the hopes that users might pass along improvements. 
 
 
-### Geocoding
+### Geocoding an expanded address list
 Currently, CREDA_tools contains only one built-in approach to geocode the data generated using the address expansion tools. The following method uses the US Census geocoding API to geocode an expanded address list processed using the steps described above. 
 ```
 project.run_geocoding('Census')
@@ -122,40 +122,84 @@ project.save_geocoding("Census_output.csv", data_fields=True, address_fields=Tru
 ```
 where the original address and/or auxiliary data fields may be included by setting the command options to True or False.
 
-There are far more reliable geocoders, and we expect that most users will wish to apply one or more of these to their expanded address data.  
+There are far more reliable geocoders, and we expect that most users will wish to apply one or more of these to their expanded address data. To add to the _project_ data structure geocodes for the expanded address data follow the following steps: 
+1.  Generate an output of the expanded address list (e.g., as was done with the file _expanded_san_jose_d1.csv_ generated earlier)
+2.  Feed the address list to your geocoder of choice to generate geocodes for the addresses in the expanded list
+3.  Create a CSV file that contains the following data fields (the first two index the expanded address list). Additional (auxiliary) data fields could be optionally included.
+    1.  lat
+    2.  long 
+    3.  confidence
+4.  The 'lat' and 'long' fields correspond to the geocoder output. The 'confidence' field is a required user-generated real number in the interval [0, 1] that conveys the user's confidence in the generated geocode (e.g., a rooftop geocode should be assigned a higher confidence than a zip code centroid).
+5.  Run the command `project.add_geocoder_results(<geocoder_name>, <file_name.csv>)` where _geocoder_name_ is a user-defined string to identify the geocoder and _file_name.csv_ is the name of the file created in Step 3. 
 
-## Parcel piercing
-
-A second method is to export a file to be run externally in Geocoders, and then add the geocoded results back in when they are finished. We expect 3 columns including a 'lat', 'long', and 'confidence', and the analysis will fail without these.
-The command make_geocoder_file() creates a generic file with TempIDZ and address information that many geocoders can use. After sending the generic file to your geocoder of choice, import the results back with the add_geocoder_results() function.
-The add_geocoder_results() function will accept the output of some geocoders natively (e.g. it will parse ArcGIS output as is), but can also accept generic geocoder files, provided they have 1) a TempIDZ field, 2) 'lat' and 'long' fields, and 3) a 'confidence' field.
+Here is an example using the San Jose sample data: 
 ```
-project.make_geocoder_file(outfile) #This creates a file with TempIDZ and cleaned address for geocoding
-# Run Geocoding in other program
-project.add_geocoder_results(geocoder, infile) # This will fail if infile doesn't contain lat, long, and confidence scores
-```
-Available geocoders can be found at (PLACEHOLDER). We do not provide licenses or API tokens to access these resources.
-After you have added/run all geocoders, you can save the completed geocoding with the save_geocoding command. This takes a filename as input, and has two optional inputs for whether you want the data fields and address fields exported as well.
-```
-project.save_geocoding('some_file.csv')
-# Or you can include optional fields
-project.save_geocoding('some_file.csv', address_fields=True, data_fields_False)
+project.add_geocoder_results("ArcGIS", "test_data/generic_geo_2.csv")
 ```
 
-#### Parcel Piercing
-All Geocoding steps provide a latitude/longitude for each address being analyzed. Given a shapefile for parcels over the same geographic area as a set of addresses, we can then perform a parcel piercing step to determine which geometries are 'pierced' by a lat/long. This includes a nearest neighbor parsing algorithm, so that if the lat/long correspond with a position on the street (e.g. the mailbox rather than the building) there is still a high likelihood of matching the point to the property.
-Parcel piercing is run on thte currently assigned shapefile, so first we assign a shapefile and then run our piercing algorithm.
+It is possible to repeat steps 1-5 above using several geocoders (the data structure in _project_ will store all the geocoders' data) --- just be sure to use distinct geocoder names. This can be useful because, in our experience, no single geocoder is able to consistently outperform all others at every location. Using multiple geocoders with judicious assignment of confidence scores can achieve superior overall performance.  
+
+**IMPORTANT:** Geocode data added using the ``add_geocoder_results`` method is assumed to line up exactly with the existing structure already stored in _project_. In particular, any excess records in the newly added file are dropped (e.g., if the base structure has 1000 rows, then only the first 1000 rows of the newly added structure are kept). To see how newly added geocode data should be lined up, compare with an output of the base structure (using the ``save_geocoding`` or the ``save_all`` methods described above).  
+
+## Parcel piercing from a list of geocodes
+
+A key task we foresee for using CREDA_tools is to associate geocodes (presumably generated from addresses) with geospatial shapes (e.g., building footprints or property parcels). In what follows, we will refer to a geospatial shape as a 'parcel' because legal parcel shapes are widely available for real estate properties in the United States, but one could also use finer (or coarser) shapes  (e.g., building footprints). The basic idea is to check whether a geocode associated with an address lies within, or 'pierces', a parcel from a list of distinct parcels.
+
+### Skipping the "Address list expansion" step to work exclusively with lists of geocodes 
+The previous section ("Address list expansion") outlines how one can arrive at lists of geocodes (one list for every geocoder used) associated with an expanded address list. This is not necessary if one already has a set of geocoded clean addresses. The following methods outline how one can create a data structure directly from a list of geocodes without the need to explicitly include addresses. Address information is not used in parcel piercing tasks but is, of course, important if one wishes to link parcel piercing results back to an address list. 
+
+To skip the address list expansion task and create a data structure of geocode lists, which can then be used in parcel piercing, instantiate the _project_ object using the 
+geocodes" option instead of the "addresses" option. This is done by issuing the command ``helper.CREDA_Project("geocodes", <in_file>)`` where <in_file> is the name of a (CSV) file (placed in quotes) with required data fields 'lat', 'long', and 'confidence'. Auxiliary data columns are permitted as are optional 'TempID' and 'TempIDZ' key fields. As with the geocoding data discussed earlier, a confidence parameter is required. If 'TempID' or 'TempIDZ' fields are included the instantiated project uses these as a base for its data structure. If they are not included, they will be created. As with the earlier case of geocoding expanded address lists, non-unique 'TempID' entries be used to refer to user-defined groupings of geocodes. This may happen when a record in some source data is associated with multiple geocodes (e.g., multiple addresses, structures, or properties). Using the provided San Jose sample data, project instantiation using the "geocodes" option looks as follows:
+```
+project = helper.CREDA_Project("geocodes", "test_data/generic_geo_2.csv")
+```
+An output of the geocodes data structure in _project_ can be created using the ``save_geocoding`` or the ``save_all`` methods described above. To incorporate additional geocoders into the data structure, so as to benefit from their complementary strengths, follow the steps above for implementing the method ``add_geocoder_results``. 
+
+### Parcel Piercing
+
+If the _project_ data structure contains geocodes, one can associate each with a geospatial shape from a list. To load a list of shapes into the data structure, run ``project.assign_shapefile(<shapefile>)``, where _shapefile_ is the name of a (CSV) file (placed in quotes) with required data field 'GEOM' containing WKT strings. At this point, the only WKT shapes that can be processed correspond to POLYGON, MULTIPOLYGON, or GEOMETRYCOLLECTION (containing either POLYGON or MULTIPOLYGON shapes). If a non-unique 'ShapeID' field is provided, then it can be used to refer to user-defined groupings of shapes. This may happen, for instance, when multiple shapes are related (e.g., a multi-parcel property). If a 'ShapeID' field is not provided, it will be created sequentially. Correspondingly, the method creates a unique 'ShapeIDZ' numerical identifier to further refine all polygons that share the same 'ShapeID' (some WKT shapes are MULTIPOLYGONS or GEOMETRYCOLLECTION and these are expanded into distinct polygons). SUMMARIZING: Each ShapeIDZ refers to a single geospatial polygon while a ShapeID may link groups of geospatial polygons.   
+
+We strongly recommend pre-processing _shapefile_ to eliminate essentially duplicate WKT shapes (e.g., those sharing 99.999% of their area). At this point, we are not offering tools to help refine shape files, so this is left to the user's discretion. Note that the presence of near-duplicate shapes is likely to lead to multiple shapes pierced by the same geocode. Once the shape file is addred to the _project_ structure, one can run the piercing algorithm. For example:
 ```
 project.assign_shapefile("CREDA_tools/test_data/san_jose_shapes.csv")
 project.perform_piercing()
 ```
+The results can be viewed by generating output via the ``save_all`` methods described above. In the generated output file, pierced parcels are identified by their ShapeIDZ identifier (or _identifiers_ if a geocode pierces several polygons). 
+
+
+## Assigning UBIDs to shapes
+
+WKT strings are cumbersome to use as record identifiers. A more efficient approach to code geospatial information into a string is the Unique Building Identifier (UBID) developed by the US Department of Energy (DOE). We incorporated some of their tools into our suite. There are two ways to assign UBIDs to shapes in CREDA_tools. The first takes results from parcel piercing (as described above) and assigns UBIDs to all pierced shapes (polygons) as well as to polygons related to pierced shapes (via a grouping such as a ShapeID). The second method allows users to instantiate a project using only a list of WKT shapes and then assign a UBID to *every* shape in the list. The second method is useful when a user has already associated shapes with address records and simply needs transform them into the more efficient UBID identifier.
+
+### Assigning UBIDs to pierced (and related) polygons 
+
+ <!--  
 Geocoders often produce differing results, leading to different parcels pierced by lat/long coordinates. The CREDA_tools function pick_best_match() goes through each row of your piercing results where there is disagreement and can analyze them to select the optimal piercing. The function pick_best_match() by default uses a simple_max algorithm, which chooses the piercing with the highest confidence score based on the geocoder output. That being said, it is likely that among your available geocoders some will excel in other geographies while others are preferable another set. CREDA_tools provides a 'config.ini' that can adjust the confidence values generated from the geocoders to help solve this. The best selection for your dataset may require a custom scorer. For this reason, pick_best_match() accepts a function as input to allow for a custom picking algorithm to be run on each row.
-The code below uses the default simple_max() function to choose the optimal matches.
+--> 
+
+To assign UBIDs to a data structure with pierced shapes, run the following command after ``project.perform_piercing()``: 
 ```
-project.pick_best_match()
+project.generate_UBIDs()
 ```
-Note: Although pick_best_match() is trivial when only a single geocoder is used, UBID creation requires a best_matches object generated in the pick_best_matches() step. If this step is omitted, it is automatically run during UBID generation.
-#### UBID generation
+Recall that each row in the geocode data structure represents a single "expanded address" or, equivalently, a unique TempIDZ. Each such row may be associated with multiple geocodes if, address information was sent to more than one geocoders. For each TempIDZ, the ``project.generate_UBIDs()`` method assigns a single UBID corresponding to the polygon pierced by the **highest confidence** geocode. It is possible to change the criteria for selecting the optimal geocode to use when there are several candidates that pierce different parcels. To do this, see the code for the method ``pick_best_match(<func>)`` which can accept a function, _func_, that will prioritize geocodes according to a criterion other than highest confidence.
+
+To generate an output for this procedure, either use the ``save_all`` method or the ``save_UBIDs`` method. The latter has the same syntax and output options as the ``save_geocoding`` command described earlier. For a given TempIDZ, the output will include the following fields:
+* **best_geocoder** --- The geocoder chosen (based on a criterion such as the highest confidence) 
+* **matching_ShapeIDZ** --- A list of the ShapeIDZs of a polygon pierced by the chosen geocode. Note that it is possible for more than one polygon to be pierced if the shape file data isn't sufficiently pre-processed to remove near-duplicate shapes (or, more rarely, if the parcel record data contain distinct but overlapping polygons).
+* **single_ShapeIDZ** --- The ShapeIDZ of one of the pierced polygons listed in 'matching_ShapeIDZ'.
+* **ShapeID, ShapeIDZ, UBID** --- Polygon shape identifiers and the UBID for any polygon that is related to 'single_ShapeIDZ' (because they share the same 'Shape_ID'). As mentioned earlier, this can happen when polygons are linked through some relationship (like common ownership). 
+
+![image](https://user-images.githubusercontent.com/69352948/115027297-885a5500-9e91-11eb-94e6-b412899fb275.png)
+
+
+### Assigning UBIDs to a list of polygons 
+
+CREDA_tools also provides solutions to users who simply wish to assign UBIDs to all shapes in a shape file. In this case, the project should be instantiated as follows:
+```
+project = helper.CREDA_Project("parcels",<in_file>)
+```
+Here, <in_file> is the name of the shape file, formatted according to the specifications outlined for _shapefile_ above (see "Parcel Piercing"). Unless a 'ShapeID' field is included, the project will automatically assign a ShapeID to every row of data (i.e., every WKT string). In addition, any WKT string containing more than one polygon will be expanded into its constituents and each will be assigned a unique ShapeIDZ. As emphasized earlier, and unless necessary for the specific use case, we encourage users to preprocess shape files to eliminate near-duplicates and incorporate any relationships across rows (i.e., shapes) using common ShapeID entries.
+
 Addresses should now be matched to the ShapeIDs from the Shapefile. As parcel shapes and property boundaries may change over time, we recommend a final switch to DOE UBIDs for the highest-confidence unique identifier for a property. This also allows for efficient joining with other data sets with UBID property values via Jaccard index.
 ```
 project.generate_UBIDs()
