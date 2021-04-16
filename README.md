@@ -206,29 +206,11 @@ project.generate_UBIDs()
 ```
 As discussed earlier, an output of the results can be generated using the ``save_all`` method or the ``save_UBIDs`` method.
 
-<---
-After you have generated UBIDs, you can save the completed UBID results with the save_UBIDs() command. This takes a filename as input, and has two optional inputs for whether you want the data fields and address fields exported as well.
-```
-project.save_UBIDs('some_file.csv')
-# Or you can include optional fields
-project.save_UBIDs('some_file.csv', address_fields=True, data_fields_False)
-```
---->
 
-#### Adding additional datasets
-To combine multiple datasets, this process can be completed on another file, followed by a jaccard score match. For example:
-```
-project2 = helper.CREDA_Project("test_data\\san_jose_d2.csv")
-project2.clean_addresses()
 
-project2.run_geocoding('Census')
-project2.assign_shapefile("CREDA_tools/test_data/san_jose_shapes.csv")
-project2.perform_piercing()
-project2.pick_best_match()
-project2.generate_UBIDs()
+## Matching on UBIDs
 
-temp = project.jaccard_combine(project2)
-```
+
 
 ## Contributing
 
