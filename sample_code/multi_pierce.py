@@ -10,6 +10,8 @@ from CREDA_tools import helper
 project = helper.CREDA_Project("geocodes", "tstShapesGeocodes.csv", geocoder='generic')
 
 project.assign_shapefile("tstShapes.csv")
+#helper.create_shape_pickle("tstShapes.csv", "tstShapes.pickle")
+#project.assign_shapefile("tstShapes.pickle")
 
 project.perform_piercing()
 project.pick_best_match()

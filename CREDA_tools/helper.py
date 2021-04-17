@@ -103,7 +103,7 @@ class CREDA_Project:
     UBIDs = pd.DataFrame()
     past_clean = True
     
-    df_list = dict.fromkeys(['TempIDZ','TempID','orig_addresses','parsed_addresses',
+    df_list = dict.fromkeys(['orig_addresses','parsed_addresses',
                              'geocoder_results','piercing_results','best_matches',
                              'UBIDs','TempID_errors','TempIDZ_errors','data_fields'],
                             pd.DataFrame())
@@ -190,11 +190,11 @@ class CREDA_Project:
         self.IDs = self.shapes.shape_df[['ShapeID']].reset_index()
         self.IDs.rename(columns={'ShapeID':'TempID', 'ShapeIDZ':'TempIDZ'}, inplace=True)
         self.best_matches = self.IDs.copy()
-        
-        # self.best_matches['matching_ShapeIDZ'] = [[list(self.best_matches['TempIDZ'])]]
+
         self.best_matches['matching_ShapeIDZ'] = [[x] for x in self.best_matches['TempIDZ']]
         self.IDs.set_index('TempIDZ', inplace=True)
         self.best_matches.set_index('TempIDZ', inplace=True)
+        self.best_matches.drop(columns='TempID', inplace=True)
         self.df_list['best_matches'] = self.best_matches
 
 
@@ -442,7 +442,6 @@ class CREDA_Project:
         if self.UBIDs.shape[0]>0:
             final_rows = []
             temp = temp.reset_index()
-            print(temp.columns)
             for _, row in temp[temp['matching_ShapeIDZ'].notna()].iterrows():
                 for item in row['matching_ShapeIDZ']:
                     row['single_ShapeIDZ'] = item
@@ -457,7 +456,7 @@ class CREDA_Project:
 
         else:
             final_df = temp
-        final_df.to_csv(outfile)
+        final_df.to_csv(outfile, index=False)
 
 '''
     def jaccard_combine(self, other, outfile=None):
