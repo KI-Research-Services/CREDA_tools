@@ -397,7 +397,8 @@ class CREDA_Project:
         UBIDs = pd.DataFrame(UBIDs, columns=['ShapeIDZ']).set_index('ShapeIDZ')
         #We now have a DataFrame, single column, of unique ShapeIDs
 
-        self.UBIDs = pd.merge(UBIDs, self.shapes.shape_df[['ShapeID','polygon']], how='inner', left_index=True, right_index=True)
+        UBIDs = pd.merge(UBIDs, self.shapes.shape_df[['ShapeID']], how='inner', left_index=True, right_index=True).set_index('ShapeID')
+        self.UBIDs = pd.merge(UBIDs, self.shapes.shape_df[['ShapeID','polygon']], how='inner', left_index=True, right_on=['ShapeID'])
 
         self.UBIDs['UBID'] = self.UBIDs['polygon'].apply(SHP.get_UBID)
         self.UBIDs.drop(columns=['polygon'], inplace=True)
@@ -418,6 +419,7 @@ class CREDA_Project:
                 field_list.append('orig_addresses')
             else:
                 print('Cannot add addresses as they have not initialized')
+        field_list.append('best_matches')
         self.save_all(filename, field_list)
 
     def save_all(self, outfile, field_list=None):
