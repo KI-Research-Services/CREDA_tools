@@ -37,13 +37,49 @@ stream_handler.setFormatter(formatter)
 logger.addHandler(file_handler)
 logger.addHandler(stream_handler)
 
-def setSilent():
+def SetSilent():
+    '''
+    This function sets the logger to error, ignoring all other log commands
+
+    Returns
+    -------
+    None.
+
+    '''
     logger.setLevel(logging.ERROR)
 
-def setVerbose():
+def SetVerbose():
+    '''
+    This function sets the logger to info, outputing to the screen standard information
+
+    Returns
+    -------
+    None.
+
+    '''
     logger.setLevel(logging.INFO)
 
 def simple_max(row, geocoders):
+    '''
+    This is the default evaluation function used by pick_best_match() to choose
+    which geocoder result in the case of multiple geocoders. This simply takes
+    the confidence score given by each geocoder and selects the highest. In case
+    of a tie, it takes the first provided geocoder.
+
+    Parameters
+    ----------
+    row : TYPE
+        A single row from the piercing results dataframe. Should contain results
+        for at least a single geocoder (status and confidence)
+    geocoders : TYPE
+        A simple array of geocoders found in the passed row.
+
+    Returns
+    -------
+    row : TYPE
+        Returns the row, now with matching_ShapeIDZ populated.
+
+    '''
     found = False
     best_geocoder = ""
     best_geocoder_score = 0
@@ -102,7 +138,7 @@ class CREDA_Project:
     shapes = pd.DataFrame()
     UBIDs = pd.DataFrame()
     past_clean = True
-    
+
     df_list = dict.fromkeys(['orig_addresses','parsed_addresses',
                              'geocoder_results','piercing_results','best_matches',
                              'UBIDs','TempID_errors','TempIDZ_errors','data_fields'],
@@ -141,7 +177,7 @@ class CREDA_Project:
         file_lines = pd.read_csv(infile_path)
         file_lines.reset_index(inplace=True)
         file_lines.rename(columns={'index':'TempID'}, inplace=True)
-        file_lines['TempID'] = file_lines['TempID'] + 1
+        file_lines['TempID'] = file_lines['TempID']
         for item in ['TempID', 'addr', 'city', 'postal', 'state']:
             if item not in file_lines.columns:
                 raise KeyError(f"Your infile doesn't contain the {item} column")
@@ -207,7 +243,7 @@ class CREDA_Project:
         logger.info('\tStarting with UBIDs')
         file_lines.reset_index(inplace=True)
         file_lines.rename(columns={'index':'TempIDZ'}, inplace=True)
-        file_lines['TempIDZ'] = file_lines['TempIDZ'] + 1
+        file_lines['TempIDZ'] = file_lines['TempIDZ']
 
         UBID_lines = file_lines[['TempIDZ', 'UBID']].copy()
         if 'TempID' in file_lines.columns:
@@ -293,7 +329,7 @@ class CREDA_Project:
 
         '''
         temp = pd.merge(self.parsed_addresses, self.IDs, how='inner', left_index=True, right_index=True)
-        df_to_geocode = pd.merge(temp, self.orig_addresses[['city', 'postal', 'state']], how='inner', left_on='TempID', right_index=True)
+        df_to_geocode = pd.merge(temp.reset_index(), self.orig_addresses[['city', 'postal', 'state']], how='inner', left_on='TempID', right_index=True)
 
         validator_factory = validators.ValidatorFactory()
         temp_geocoder = validator_factory.create_realtime_validator(geocoder, df_to_geocode)
@@ -349,7 +385,7 @@ class CREDA_Project:
             else:
                 self.piercing_results = temp_pierced
                 self.df_list['piercing_results'] = self.piercing_results
-    
+
     def save_shapes(self, filename):
         self.shapes.shape_df.to_csv(filename)
 
@@ -453,10 +489,11 @@ class CREDA_Project:
             #Merge with shape_df to get associate shapes
             final_df = pd.merge(final_df, self.UBIDs['ShapeID'], how = 'left', left_on='single_ShapeIDZ', right_index=True)
             final_df = pd.merge(final_df, self.UBIDs.reset_index(), how = 'left', left_on='ShapeID', right_on='ShapeID')
-
+            final_df = pd.merge(final_df, self.shapes.flags.reset_index(), how = 'left', left_on='ShapeID', right_on='ShapeID')
+            final_df.to_csv(outfile, index=False)
         else:
             final_df = temp
-        final_df.to_csv(outfile, index=False)
+            final_df.to_csv(outfile)
 
 '''
     def jaccard_combine(self, other, outfile=None):

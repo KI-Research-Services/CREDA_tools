@@ -46,18 +46,18 @@ def get_UBID(polygon):
 
 class ShapesList():
     
-    ShapeID_flags = {}
-    ShapeIDZ_flags = {}
+    flags = pd.DataFrame(columns = ['Shape Flag','ShapeID']).set_index('ShapeID')
     
     def __init__(self, file):
         shape_frame = pd.read_csv(file)
         shape_frame.dropna(inplace=True) # TODO Currently drops if incomplete info. Likely a problem
         shape_frame.drop_duplicates(inplace=True)
         shapes = []
-        failed_shapes = []
+        flags = []
         ShapeIDZ = 0
         
         if 'PARCEL_APN' in shape_frame.columns:
+            pass
             '''
             if 'ShapeID' in shape_frame.columns:
                 #logger.warning('PARCEL_APN and ShapeID present. PARCEL_APN retained as data')
@@ -74,13 +74,15 @@ class ShapesList():
             try:
                 WKT = shapely.wkt.loads(item.GEOM)
                 WKT_shapes = unpack(WKT)
+                if len(WKT_shapes) > 1:
+                    flags.append({'ShapeID':index,'flag':'ShpInf_01'})
                 for polygon in WKT_shapes:
                     minx, miny, maxx, maxy = polygon.bounds
                     shapes.append({'ShapeID':index, 'ShapeIDZ':ShapeIDZ, 'polygon':polygon.to_wkt(),
                                    'minx':minx, 'maxx':maxx, 'miny': miny, 'maxy':maxy,})
                     ShapeIDZ = ShapeIDZ + 1
             except WKTReadingError:
-                failed_shapes.append({'ShapeID':index,'GEOM':item.GEOM})
+                flags.append({'ShapeID':index,'flag':'ShpErr_01'})
                 #logger.exception(f'shapeID {index} failed parsing')
                 
         #logger.info("In init creating shape_df")
@@ -88,7 +90,13 @@ class ShapesList():
         #We can probably do this with a .apply() method, but the above loop was clear enough.
         self.shape_df = pd.DataFrame.from_dict(shapes)
         self.shape_df.set_index('ShapeIDZ', inplace=True)
-        self.failed_shapes = pd.DataFrame.from_dict(failed_shapes)
+        if len(flags) > 0:
+            self.flags = pd.DataFrame.from_dict(flags).set_index('ShapeID')
+            self.flags = pd.merge(self.flags, self.Error_Codes, how='left', left_on='flag', right_index=True)
+            self.flags['Shape Flag'] = self.flags.flag + ": " + self.flags.description
+            self.flags.drop(columns=['flag','description'], inplace=True)
+        
+        #self.flags['flag2'] = self.flags['flag'].str + " " + self.Error_Codes[self.flags.flag]
         '''
         for shape in list(self.failed_shapes.ShapeID):
             self.ShapeID_flags.setdefault(self.ShapeID, []).append("WKT didn't parse correctly")
@@ -134,10 +142,16 @@ class ShapesList():
         to_return = pd.DataFrame.from_dict(results)
         to_return.set_index('TempIDZ', inplace=True)
         to_return.index = to_return.index.astype(int)
+        
         return(to_return)
 
-    def get_failed_shapes(self):
-        return self.failed_shapes
+    Error_Codes = {
+        'ShpErr_01':'Bad WKT String',
+        'ShpInf_01':'Multipolygon Found',
+        'ShpInf_02':'Large Shape',
+        'ShpInf_03':'Outside continental US'
+        }
+    Error_Codes = pd.DataFrame.from_dict(Error_Codes,orient='index', columns=['description'])
         
     def get_shapes(self):
         return self.shape_df
