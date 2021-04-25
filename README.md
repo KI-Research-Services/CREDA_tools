@@ -56,12 +56,12 @@ Give an example
 The tools in this package are organized around various useful tasks encountered when attempting to map addresses to a spatial identifier. A spatial identifier is a reference to a unique geometry in a standardized grid. For instance, a polygon in the Google Open Location Code grid. The reference can also be to a polyhedron in a 3D grid. Currently, we employ the spatial reference approach pioneered by the US Department of Energy (DOE) through their Unique Building Identifier (UBID) project linked above.
 
 ### Instantiation
-Once you have a root folder with CREDA_tools inside it, we can begin a task or sequence of tasks. First, one must import the tool library (do this from within the top CREDA_tools directory):
+Once you have a root folder with CREDA_tools inside it, you can begin a task or sequence of tasks. First, one must import the tool library (do this from within the top CREDA_tools directory):
 ```
 from CREDA_tools import helper
 ```
 
-Instantiatiation of a CREDA_Project object with a data file takes the following form (sample files demonstrating various tasks have been provided in the /test_data directory). 
+Instantiation of a CREDA_Project object using a data file takes the following form (sample data files used in demonstrating various tasks are in the /test_data directory). 
 ```
 project = helper.CREDA_Project(<task_type>, <in_file>)
 ```
