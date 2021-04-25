@@ -65,16 +65,16 @@ Instantiation of a CREDA_Project object using a data file takes the following fo
 ```
 project = helper.CREDA_Project(<task_type>, <in_file>)
 ```
-
-* Parsing a string containing multiple addresses into an expanded list of street addresses that can be geocoded.
+#### Tasks
+* Parsing strings from a list, where each string contains multiple addresses, into an expanded list of street addresses that can be geocoded.
   * <task_type> = "addresses"  
   * <in_file> is the name of a (CSV) file (placed in quotes) with required data fields 'addr', 'city', 'postal', and 'state'. Auxiliary data columns are permitted. 
   * Note that the 'addr' field can contain multiple street addresses (e.g., the single string "140 Main St., 20-52 Ford Ave., 67 & 122 Glenn Dr.").
 * Associating geocodes with geospatial polygons that the geocodes ``pierce''.
   * <task_type> = "geocodes"  
   * <in_file> is the name of a (CSV) file (placed in quotes) with required data fields 'lat', 'long', and 'confidence'. Auxiliary data columns are permitted. 
-  * The confidence field is a number between 0 and 1 that scores the confidence associated with the geocoded data. When geocoding addresses, greater confidence should be associated with a returned geocode if it corresponds to a rooftop geocode rather than a zip code centroid. The confidence level is assumed to be assigned by the user (it is subjective) based on their knowledge/experience with the geocoder(s) used.
-  * If a non-unique 'TempID' field is included, then it can be used to refer to user-defined groupings of geocodes. This may happen when a record in a dataset is associated with multiple geocodes (e.g., multiple addresses, structures, or properties).  
+  * The confidence field is a number between 0 and 1 that scores the confidence associated with the geocoded data. Greater confidence should be associated with a returned geocode based on the perceived accuracy (e.g., if it corresponds to a rooftop geocode versus a zip code centroid). The confidence level is assumed to be subjectively assigned by the user based on their knowledge/experience with the geocoder(s) used.
+  * If a non-unique 'TempID' field is included, then it can be used to refer to user-defined groupings of geocodes. This may happen when a record in a dataset is associated with multiple geocodes (e.g., multiple addresses/structures/properties).  
 * Assigning a spatial identifier to each shape in a list. 
   * <task_type> = "parcels"  
   * <in_file> is the name of a (CSV) file (placed in quotes) with required data field 'GEOM' containing WKT strings. At this point, the only WKT strings that can be processed are
@@ -87,9 +87,9 @@ Once a project has been instantiated, several function can be applied to the cre
 
 ## Address list expansion
 
-In many commercial real estate data sets, the address field for a "property" record contains items such as "1650 - 1750 S. Babcock Avenue" or "1610-1650 Bienvenue Road", each of which refers to a _list_ of addresses rather than a single address. When linking or merging data sets, or simply looking for related records within the same data set (e.g., repeat sales transactions), it seems useful to allow for partial overlap. For instance, a record referring to "1650 - 1750 S. Babcock Avenue" might have some relationship to one referring to "1700 S. Babcock Avenue". The tool we developed and describe in this section are meant for expanding such address references into address lists. We are not aware of the availability of similar tools. 
+In many commercial real estate data sets, the address field for a "property" record contains items such as "1650 & 1750 S. Babcock Avenue" or "1610-1650 Bienvenue Road", each of which refers to a _list_ of addresses rather than a single address. When linking or merging data sets, or simply looking for related records within the same data set (e.g., repeat sales transactions), it seems useful to allow for partial overlap. For instance, a record referring to "1650 & 1750 S. Babcock Avenue" might have some relationship to one referring only to "1700 S. Babcock Avenue". The tool we developed and describe in this section is meant for expanding such address references into address lists. We are not aware of the general availability of a similar tool. 
 
-At this point, the tool creates a list from compounded street addresses that use one or more of the following conjunctions and delimiters (not case sensitive): "and", "&", "/", "\\", "-", ";", ",". Some examples of compound addresses are found in _san_jose_d1.csv_, available in the _CREDA_tools/test_data_ directory. The following sequence of commands expands this file into a list of addresses (please remember to work in the top CREDA_tools directory). 
+At this point, the tool creates a list from compounded street addresses that use one or more of the following conjunctions and delimiters (not case sensitive): "and", "&", "/", "\\", "-", ";", ",". Some examples of compound addresses are found in _san_jose_d1.csv_, available in the _CREDA_tools/test_data_ directory. The following sequence of commands expands this file into a list of addresses (please remember to work in the top CREDA_tools directory). We use data from San Jose in this and other examples because the municipality posted its parcel addresses and shapes on a public server.
 
 ```
 from CREDA_tools import helper
@@ -98,16 +98,16 @@ project.clean_addresses()
 project.addr_parse_report("report_san_jose_d1.csv")
 ```
 As described earlier, the first command imports the project tools. The second instantiates a "project" object that contains the address file. The object _project_ assigns a sequential unique internal identifier, 'TempID', to each row of data in _san_jose_d1.csv_. The `clean_addresses()` method does the following:
-* Expands each row into multiple single addresses, sequentially identified by a new variable, 'TempIDZ'. Hyphen delimiters are, in most cases, assumed to imply a range of same-parity addresses (all numbers with the same parity delimited by the hyphen). Although this may lead to the creation of non-existent addresses, we assume that the expanded list will be fed to an address validator (e.g., USPS or a geocoder) and consequently reduced.  
-* Generates a code detailing suspected problems or errors. 
+* Expands each row into multiple single addresses, sequentially identified by a new variable, 'TempIDZ'. Hyphen delimiters are, in most cases, assumed to imply a range of same-parity addresses (all numbers with the same parity delimited by the hyphen). Although this may lead to the creation of non-existent addresses, we assume that the expanded list will be fed to an address validator (e.g., USPS or a geocoder) and subsequently reduced.  
+* Generates a code flagging compound addresses and detailing suspected problems or errors. 
 
-The `addr_parse_report` method creates an output file that reports on the the attempt to parse the address data into an expanded list of well-formed street address strings. The report flags exceptional rows --- those with with problematic addresses or expandable addresses. The flags, in turn, explain the nature of the exception. A table of flags and their meaning is in the Excel spreadsheet, "FunctionMap.xlsx", provided with this package.  
+The `addr_parse_report` method creates an output file that reports on the the attempt to parse the address data into an expanded list of well-formed street address strings. The report flags exceptional rows --- those with problematic addresses or expandable addresses. The flags, in turn, explain the nature of the exception. A table of flags and their meaning is in the Excel spreadsheet, "FunctionMap.xlsx", provided with this package.  
 
 An output of the expanded address list (together with 'TempID' and 'TempIDZ' internal identifiers) can be obtained by subsequently running the command
 ```
 project.make_geocoder_file("expanded_san_jose_d1.csv")
 ```
-As its syntax suggests, the output of this file can be fed to a geocoder or address validator. If a row in the address data generates a parsing error, it is **not** included in the output of this method. To examine such problem rows, consult the report file. An alternative to using the `addr_parse_report` or `make_geocoder_file` commands is the command `project.save_all("tstoutfile7.csv")`, which will create an output containing the full data structure stored in _project_.
+As its syntax suggests, the output of this file can be fed to a geocoder or address validator. If a row in the address data generates a parsing error, it is **not** included in the output of this method. To examine such problem rows, consult the report file. An alternative to using the `addr_parse_report` or `make_geocoder_file` commands is the method `project.save_all(<outfile>)`, which will create an output file containing the full data structure stored in _project_.
 
 This tool is still under development and offered "as is" in the hopes that users might pass along improvements. 
 
@@ -117,32 +117,32 @@ Currently, CREDA_tools contains only one built-in approach to geocode the data g
 ```
 project.run_geocoding('Census')
 ```
-After execution, the _project_ object's data structure is appended with lat/long data. In addition, a 'confidence' score for each successful geocoder response request.
+After execution, the _project_ object's data structure is appended with lat/long data. In addition, a 'confidence' score is assigned to each successful geocoder response request (an "Exact" geocode returned by the Census is assigned a score of 0.89, while a "Non_Exact" geocode is assigned a score of 0.7).
 
 To generate an output of the geocoded data, one can use the following method,
 ```
 project.save_geocoding("Census_output.csv", data_fields=True, address_fields=True)
 ```
-where the original address and/or auxiliary data fields may be included by setting the command options to True or False.
+where the original address and/or auxiliary data fields may be included/excluded by setting the command options to True or False.
 
-There are far more reliable geocoders, and we expect that most users will wish to apply one or more of these to their expanded address data. To add to the _project_ data structure geocodes for the expanded address data follow the following steps: 
+There are far more reliable geocoders, and we expect that most users will wish to apply one or more of these to their expanded address data. To add to the _project_ structure geocodes for the expanded address data follow the following steps: 
 1.  Generate an output of the expanded address list (e.g., as was done with the file _expanded_san_jose_d1.csv_ generated earlier)
 2.  Feed the address list to your geocoder of choice to generate geocodes for the addresses in the expanded list
-3.  Create a CSV file that contains the following data fields (the first two index the expanded address list). Additional (auxiliary) data fields could be optionally included.
+3.  Create a CSV file that contains the following data fields. Additional (auxiliary) data fields could be optionally included.
     1.  lat
     2.  long 
     3.  confidence
 4.  The 'lat' and 'long' fields correspond to the geocoder output. The 'confidence' field is a required user-generated real number in the interval [0, 1] that conveys the user's confidence in the generated geocode (e.g., a rooftop geocode should be assigned a higher confidence than a zip code centroid).
 5.  Run the command `project.add_geocoder_results(<geocoder_name>, <file_name.csv>)` where _geocoder_name_ is a user-defined string to identify the geocoder and _file_name.csv_ is the name of the file created in Step 3. 
 
-Here is an example using the San Jose sample data: 
+Below is an example using the San Jose sample data. 
 ```
 project.add_geocoder_results("ArcGIS", "test_data/generic_geo_2.csv")
 ```
 
 It is possible to repeat steps 1-5 above using several geocoders (the data structure in _project_ will store all the geocoders' data) --- just be sure to use distinct geocoder names. This can be useful because, in our experience, no single geocoder is able to consistently outperform all others at every location. Using multiple geocoders with judicious assignment of confidence scores can achieve superior overall performance.  
 
-**IMPORTANT:** Geocode data added using the ``add_geocoder_results`` method is assumed to line up exactly with the existing structure already stored in _project_. In particular, any excess records in the newly added file are dropped (e.g., if the base structure has 1000 rows, then only the first 1000 rows of the newly added structure are kept). To see how newly added geocode data should be lined up, compare with an output of the base structure (using the ``save_geocoding`` or the ``save_all`` methods described above).  
+**IMPORTANT:** Geocode data added using the ``add_geocoder_results`` method is assumed to line up exactly with the existing structure already stored in _project_. In particular, any excess records in the newly added file are dropped (e.g., if the base structure has 1000 rows, then only the first 1000 rows of the newly added structure are kept). To see how newly added geocode data should be lined up, compare with an output of the base structure (using the ``save_geocoding`` or the ``save_all`` methods described above).   
 
 ## Parcel piercing from a list of geocodes
 
