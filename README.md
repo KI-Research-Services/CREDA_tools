@@ -1,6 +1,11 @@
 # CREDA Tools
 
-This repository contains the primary code base for the [CREDA Project](https://kenaninstitute.unc.edu/publication/commercial-real-estate-data-towards-parity-with-other-asset-classes-a-report-on-the-progress-of-the-commercial-real-estate-data-alliance-creda/) at UNC's [Kenan Institute for Private Enterprise](https://kenaninstitute.unc.edu/). This code is specifically meant to take various commercial real estate data sources, identifying properties by addresses, to joining datasets via DOE UBIDs. We ask users of this repository to please cite our work (e.g., Fisher, D. and Sagi, J.S. (2021), CREDA_tools: Linking address records through geospatial identifiers. https://github.com/KI-Research-Services/CREDA_tools).  
+This repository contains the primary code base for the address-matching [CREDA Project](https://kenaninstitute.unc.edu/publication/commercial-real-estate-data-towards-parity-with-other-asset-classes-a-report-on-the-progress-of-the-commercial-real-estate-data-alliance-creda/) at UNC's [Kenan Institute for Private Enterprise](https://kenaninstitute.unc.edu/). The code toolkit is designed to help transform commercial real estate data source address identifiers into geospatially meaningful identifiers (via Department of Energy UBIDs). These can then be used for merging data sets and to investigate relationships between records within a data set. We ask users of this repository to please cite our work. E.g.,
+
+```
+Fisher, D. and Sagi, J.S. (2021), CREDA_tools: Linking address records through geospatial identifiers. 
+https://github.com/KI-Research-Services/CREDA_tools).
+```
 
 ## CREDA Mission Statement
 
@@ -8,19 +13,17 @@ The Commercial Real Estate Data Alliance is a consortium of academics dedicated 
 
 ## Getting Started
 
-These instructions will get you a copy of the project up and running on your local machine for development and testing purposes. See deployment for notes on how to deploy the project on a live system.
+The document, "Install instructions for GitHub.pdf", contains detailed instructions for getting a copy of the project up and running on your local machine for development and testing purposes. 
 
 ### Prerequisites
 
-CREDA_tools is built in Python, so a Python installation will be needed. Basic CREDA_tools has fairly lightweight requirements, but will require a few extra libraries depending on functions used. Requirements include:
+CREDA_tools is built in Python and has fairly lightweight requirements. If you prefer not to follow the instructions in the installation document, please ensure that the following libraries are installed:
 
 * Numpy
 * Pandas
 * Shapely
 * buildingid from the Department of Energy. Instructions for this installation can be found at [their GitHub Repository](https://github.com/pnnl/buildingid-py).
 * censusgeocode is needed to use the Census Geocoder. Run with 'pip install censusgeocode'
-
-### Installing
 
 As this goes public, we would like to transition to a pip install of CREDA_tools as well. In the meantime, we recommend cloning/downloading the repository such that CREDA_tools is a subdirectory in the root folder you wish to run projects in.
 
@@ -224,14 +227,17 @@ where <in_file1> and <in_file2> are CSV files, each containing a 'UBID' field wi
 
 We welcome all help in furthering the CREDA Initiative. To contribute in code development, please read (THIS IS ONLY A PLACEHOLDER) [CONTRIBUTING.md](https://gist.github.com/PurpleBooth/b24679402957c63ec426) for details on our code of conduct, and the process for submitting pull requests to us. To collaborate with additional data and tools, please reach out to David_Fisher @ kenan-flagler.unc.edu.
 
-## Authors
+## Authors and acknowledgements
 
 * **David Fisher** - *Development of Initial Pipeline, ongoing code improvements* - [Kenan Institute for Private Enterprise](https://kenaninstitute.unc.edu/)
 * **Jacob Sagi** - *Professor at UNC's Kenan-Flagler Business School, primary architect of CREDA* - [Kenan-Flagler Business School](https://www.kenan-flagler.unc.edu/faculty/directory/jacob-sagi/)
-* **[Huan Lian](https://kenaninstitute.unc.edu/people/huan-lian/)** - *Wizard data analyst and tester supporting the project* - [Kenan Institute for Private Enterprise](https://kenaninstitute.unc.edu/)
 
+This project would not have been possible without the financial support of the [Kenan Institute for Private Enterprise](https://kenaninstitute.unc.edu/) and the [Wood Center for Real Estate Studies](https://realestate.unc.edu/). Significant contributions have also been made by [Huan Lian](https://kenaninstitute.unc.edu/people/huan-lian/) and [Tomek Wisniewski](https://www.linkedin.com/in/tomwi).
+
+<!--- 
 See also the list of (PLACEHOLDER) [contributors](https://github.com/your/project/contributors) who participated in this project.
+--->
 
 ## License
 
-This project is licensed under the MIT License (PLACEHOLDER. We need to decide on licensing) - see the [LICENSE.md](LICENSE.md) file for details
+This project is licensed under the [MIT License](https://choosealicense.com/licenses/mit/) - see the [LICENSE.md](LICENSE.md) file for details
