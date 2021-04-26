@@ -177,6 +177,10 @@ project.perform_piercing()
 ```
 The results can be viewed by generating output via the ``save_all`` method described above. In the generated output file, pierced parcels are identified by their ShapeIDZ identifier (or _identifiers_ if a geocode pierces several polygons). 
 
+<!---
+NN versus piercing?
+--->
+
 ---
 
 ## Assigning UBIDs to shapes
