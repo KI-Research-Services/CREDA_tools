@@ -174,7 +174,7 @@ The results can be viewed by generating output via the ``save_all`` method descr
 
 WKT strings are cumbersome to use as record identifiers. A more efficient approach to code geospatial information into a string is the Unique Building Identifier (UBID) developed by the US Department of Energy (DOE). We incorporated some of their tools into our suite. To see examples of how the WKT strings can be associated with UBIDs, visit [https://buildingid.github.io/](https://buildingid.github.io/).
 
-There are two ways to assign UBIDs to shapes in CREDA_tools. The first takes results from parcel piercing (as described above) and assigns UBIDs to all pierced shapes (polygons) as well as to polygons related to pierced shapes (via a grouping such as a ShapeID). The second method allows users to instantiate a project using only a list of WKT shapes and then assign a UBID to *every* shape in the list. The second method is useful when a user has already associated shapes with address records and simply needs transform them into the more efficient UBID identifier.
+There are two ways to assign UBIDs to shapes in CREDA_tools. The first takes results from parcel piercing (as described above) and assigns UBIDs to all pierced shapes (polygons) as well as to polygons related to pierced shapes (via a grouping such as a ShapeID). The second method allows users to instantiate a project using only a list of WKT shapes and then assign a UBID to *every* shape in the list. The second method is useful when a user has already associated shapes with address records and simply needs to transform them into the more efficient UBID identifier.
 
 ### Assigning UBIDs to pierced (and related) polygons 
 
@@ -186,7 +186,9 @@ To assign UBIDs to a data structure with pierced shapes, run the following comma
 ```
 project.generate_UBIDs()
 ```
-Recall that each row in the geocode data structure represents a single "expanded address" or, equivalently, a unique TempIDZ. Each such row may be associated with multiple geocodes if, address information was sent to more than one geocoders. For each TempIDZ, the ``project.generate_UBIDs()`` method assigns a single UBID corresponding to the polygon pierced by the **highest confidence** geocode. It is possible to change the criteria for selecting the optimal geocode to use when there are several candidates that pierce different parcels. To do this, see the code for the method ``pick_best_match(<func>)`` which can accept a function, _func_, that will prioritize geocodes according to a criterion other than highest confidence.
+Recall that each row in the geocode data structure represents a single "expanded address" or, equivalently, a unique TempIDZ. Each such row may be associated with multiple geocodes if data was imported into the project from more than one geocoder. For each TempIDZ, the ``project.generate_UBIDs()`` method assigns a single UBID corresponding to the polygon pierced by the **highest confidence** geocode. A tie is resolved in favor of the geocoder that was imported earliest into the data structure. It is possible to change the criteria for selecting the optimal geocode to use when there are several candidates that pierce different parcels. To do this, see the code for the method ``pick_best_match(<func>)`` which can accept a function, _func_, that will prioritize geocodes according to a criterion other than highest confidenc (as this initiative evolves, we hope to move towards a set of best practices). A &mdash B
+
+---
 
 To generate an output for this procedure, either use the ``save_all`` method or the ``save_UBIDs`` method. The latter has the same syntax and output options as the ``save_geocoding`` command described earlier. For a given TempIDZ, the output will include the following fields:
 * **best_geocoder** --- The geocoder chosen (based on a criterion such as the highest confidence) 
