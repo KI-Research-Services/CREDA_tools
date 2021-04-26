@@ -113,7 +113,7 @@ An output of the expanded address list (together with 'TempID' and 'TempIDZ' int
 ```
 project.make_geocoder_file("expanded_san_jose_d1.csv")
 ```
-As its syntax suggests, the output of this file can be fed to a geocoder or address validator. If a row in the address data generates a parsing error, it is **not** included in the output of this method. To examine such problem rows, consult the report file. An alternative to using the `addr_parse_report` or `make_geocoder_file` commands is the method `project.save_all(<outfile>)`, which will create an output file containing the full data structure stored in _project_.
+As its syntax suggests, the output of this file can be fed to a geocoder or address validator. If a row in the address data generates a parsing error, it is **not** included in the output of this method. To examine such problem rows, consult the report file. An alternative to using the `addr_parse_report` or `make_geocoder_file` commands is the method `project.save_all(<out_file>)`, which will create an output file containing the full data structure stored in _project_.
 
 This tool is still under development and offered "as is" in the hopes that users might pass along improvements. 
 
@@ -205,7 +205,7 @@ To generate an output for this procedure, either use the ``save_all`` method or 
 
 The image below depicts sample output with six distinct geocodes matched to a list with six shapes (WKT strings).  
 ![image](https://user-images.githubusercontent.com/69352948/116015514-828a0f80-a607-11eb-9d64-a7c4332f0dad.png)
-The six shapes contain eight polygons (two of which, with ShapeIDs 6 & 7, are essentially identical). Only four of the five geocodes pierced a polygon among the shapes. The first geocode (TempID=10 and TempIDZ=0) pierced one of the three polygons contained in the shape with ShapeID=0. The output contains the UBIDs for **all** three of the polygons even though only one of them was pierced. This is to support a richer approach to tracing relationships across data sources.
+The six shapes contain eight polygons (two of which, with ShapeIDs 6 & 7, are essentially identical). Only five of the six geocodes pierced a polygon among the shapes. The first geocode (TempID=10 and TempIDZ=0) pierced one of the three polygons contained in the shape with ShapeID=0. The output contains the UBIDs for **all** three of the polygons even though only one of them was pierced. This is to support a richer approach to tracing relationships across data sources (because polygons with the same ShapeID are presumed to be related in some meaningful way).
 
 
 ### Assigning UBIDs to a list of polygons 
@@ -214,36 +214,35 @@ CREDA_tools also provides solutions to users who simply wish to assign UBIDs to 
 ```
 project = helper.CREDA_Project("parcels",<in_file>)
 ```
-Here, <in_file> is the name of the shape file, formatted according to the specifications outlined for _shapefile_ above (see "Parcel Piercing"). Unless a 'ShapeID' field is included, the project will automatically assign a ShapeID to every row of data (i.e., every WKT string). In addition, any WKT string containing more than one polygon will be expanded into its constituents and each will be assigned a unique ShapeIDZ. As emphasized earlier, and unless necessary for the specific use case, we encourage users to preprocess shape files to eliminate near-duplicates and incorporate any relationships across rows (i.e., shapes) using common ShapeID entries.
+Here, <in_file> is the name of the shape file, formatted according to the specifications outlined for _shapefile_ above (see "Parcel Piercing"). Unless a 'ShapeID' field is included, the project will automatically assign a ShapeID to every row of data (i.e., every WKT string). In addition, any WKT string containing more than one polygon will be expanded into its constituents and each will be assigned a unique ShapeIDZ. As emphasized earlier, and as necessary for the specific use case, we encourage users to preprocess shape files to eliminate near-duplicates and incorporate any relationships across rows (i.e., shapes) using common ShapeID entries.
 
-After instantiating the shape file data structure in _project_, UBIDs can be assigned to *all* shapes by running the ``generate_UBIDs()`` command. E.g., 
+After instantiating the shape file data structure in _project_ using the "parcels" option, UBIDs can be assigned to *all* shapes by running the ``generate_UBIDs()`` command. E.g., 
 ```
 project.generate_UBIDs()
 ```
-As discussed earlier, an output of the results can be generated using the ``save_all`` method or the ``save_UBIDs`` method.
+As discussed above, an output of the results can be generated using the ``save_all`` method or the ``save_UBIDs`` method.
 
 
 
 ## Matching on UBIDs
-To allow users to merge data sets using UBID identifiers, we incorporated into CREDA_tools the Department of Energy's code for determining geospatial overlap (specifically, their ``--left-group-by-jaccard`` and ``--right-group-by-jaccard`` functions). Our version of this tool matches a row in one CSV file with a row in another CSV file if the geospatial overlap of their respective UBID identifiers exceeds some threshold fraction of their combined areas. This is also known as an intersection over union ratio or the Jaccard index of the two regions. The merge can be performed without instantiating a project object, but first one must run ``from CREDA_tools import helper`` if it was not previously run during the session. Usage is as follows:
+To allow users to merge data sets using UBID identifiers, we incorporated into CREDA_tools the Department of Energy's code for determining geospatial overlap (specifically, their ``--left-group-by-jaccard`` and ``--right-group-by-jaccard`` functions). Our version of this tool matches a row in one CSV file with a row in another CSV file if the geospatial overlap of their respective UBID identifiers exceeds some threshold fraction of their total unique area they represent. This is also known as an intersection over union ratio or the Jaccard index of the two regions. The merge can be performed without instantiating a project object, but first one must run ``from CREDA_tools import helper`` if it was not previously run during the session. Usage is as follows:
 ```
 helper.jaccard_combine(<in_file1>, <in_file2>, threshold, <out_file>)
 ```
-where <in_file1> and <in_file2> are CSV files, each containing a 'UBID' field with UBID identifiers. The two input files can contain auxiliary data (useful for linking back to source data sets). The argument _threshold_ should be a real number between 0 and 1 and represents a minimum Jaccard index for determining a match between two geospatial regions (we have had good success using 0.65). <out_file> is the output file name. Each row in <out_file> contains a row from <in_file1> matched to a row in <in_file2> (a many-to-many merge) and all auxiliary data fields from both sources are included (fields in the input files with identical names are renamed with an _x_ and _y_ subscript, corresponding to <in_file1> and <in_file2>, respectively). <out_file> also includes two additional fields called 
+where <in_file1> and <in_file2> are CSV input files, each containing a 'UBID' field with UBID identifiers. The two input files can contain auxiliary data (useful for linking back to source data sets). The argument _threshold_ should be a real number between 0 and 1 and represents a minimum Jaccard index for determining a match between two geospatial regions (we have had good success using 0.65). <out_file> is the output file name. Each row in <out_file> contains a row from <in_file1> matched to a row in <in_file2> (a many-to-many merge) and all auxiliary data fields from both sources are included (fields in the input files with identical names are renamed with an _x_ and _y_ subscript, corresponding to <in_file1> and <in_file2>, respectively). 
 
-
-
-
-
+<!---
+<out_file> also includes two additional fields called TempIDZ and MatchIDZ. Not sure about these....
+--->
 
 ## Contributing
 
-We welcome all help in furthering the CREDA Initiative. To contribute in code development, please read (THIS IS ONLY A PLACEHOLDER) [CONTRIBUTING.md](https://gist.github.com/PurpleBooth/b24679402957c63ec426) for details on our code of conduct, and the process for submitting pull requests to us. To collaborate with additional data and tools, please reach out to David_Fisher @ kenan-flagler.unc.edu.
+We welcome help in furthering the CREDA Initiative. To contribute in code development, please read (THIS IS ONLY A PLACEHOLDER) [CONTRIBUTING.md](https://gist.github.com/PurpleBooth/b24679402957c63ec426) for details on our code of conduct, and the process for submitting pull requests to us. To collaborate with additional data and tools, please reach out to David_Fisher @ kenan-flagler.unc.edu.
 
 ## Authors and acknowledgements
 
-* **David Fisher** - *Development of Initial Pipeline, ongoing code improvements* - [Kenan Institute for Private Enterprise](https://kenaninstitute.unc.edu/)
-* **Jacob Sagi** - *Professor at UNC's Kenan-Flagler Business School, primary architect of CREDA* - [Kenan-Flagler Business School](https://www.kenan-flagler.unc.edu/faculty/directory/jacob-sagi/)
+* **David Fisher** - *Research Data Scientist at KIPE, primary code developer for CREDA_tools* - [Kenan Institute for Private Enterprise](https://kenaninstitute.unc.edu/people/david-fisher/)
+* **Jacob Sagi** - *Professor at UNC's Kenan-Flagler Business School, primary architect of CREDA_tools* - [Kenan-Flagler Business School](https://www.kenan-flagler.unc.edu/faculty/directory/jacob-sagi/)
 
 This project would not have been possible without the financial support of the [Kenan Institute for Private Enterprise](https://kenaninstitute.unc.edu/) and the [Wood Center for Real Estate Studies](https://realestate.unc.edu/). Significant contributions have also been made by [Huan Lian](https://kenaninstitute.unc.edu/people/huan-lian/) and [Tomek Wisniewski](https://www.linkedin.com/in/tomwi).
 
