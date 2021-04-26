@@ -7,6 +7,8 @@ Fisher, D. and Sagi, J.S. (2021), CREDA_tools: Linking address records through g
 https://github.com/KI-Research-Services/CREDA_tools).
 ```
 
+---
+
 ## CREDA Mission Statement
 
 The Commercial Real Estate Data Alliance is a consortium of academics dedicated to achieving data parity with other major asset classes. Specifically, we believe that improved access to and understanding of available data in commercial real estate is key to fostering higher quality research and interactions between academia and industry, to the benefit of the entire CRE community.
@@ -51,6 +53,8 @@ Give an example
 ```
 -->
 
+---
+
 ## Basic Usage
 
 The tools in this package are organized around various useful tasks encountered when attempting to map addresses to a spatial identifier. A spatial identifier is a reference to a unique geometry in a standardized grid. For instance, a polygon in the Google Open Location Code grid. The reference can also be to a polyhedron in a 3D grid. Currently, we employ the spatial reference approach pioneered by the US Department of Energy (DOE) through their Unique Building Identifier (UBID) project linked above.
@@ -84,6 +88,8 @@ project = helper.CREDA_Project(<task_type>, <in_file>)
   * If a non-unique 'ShapeID' field is provided, then it can be used to refer to user-defined groupings of shapes. This may happen, for instance, when multiple shapes are related (e.g., a multi-parcel property).   
 
 Once a project has been instantiated, several function can be applied to the created object to achieve the desired result (e.g., cleaning addresses, associating geocodes with shapes, etc.). In what follows, we provide details on each of the main tasks described above. 
+
+---
 
 ## Address list expansion
 
@@ -144,6 +150,8 @@ It is possible to repeat steps 1-5 above using several geocoders (the data struc
 
 **IMPORTANT:** Geocode data added using the ``add_geocoder_results`` method is assumed to line up exactly with the existing structure already stored in _project_. In particular, any excess records in the newly added file are dropped (e.g., if the base structure has 1000 rows, then only the first 1000 rows of the newly added structure are kept). To see how newly added geocode data should be lined up, compare with an output of the base structure (using the ``save_geocoding`` or the ``save_all`` methods described above).   
 
+---
+
 ## Parcel piercing from a list of geocodes
 
 A key task we foresee for using CREDA_tools is to associate geocodes (presumably generated from addresses) with geospatial shapes (e.g., building footprints or property parcels). In what follows, we will refer to a geospatial shape as a 'parcel' because legal parcel shapes are widely available for real estate properties in the United States, but one could also use finer (or coarser) shapes  (e.g., building footprints). The basic idea is to check whether a geocode associated with an address lies within, or 'pierces', a parcel from a list of distinct parcels.
@@ -169,6 +177,7 @@ project.perform_piercing()
 ```
 The results can be viewed by generating output via the ``save_all`` method described above. In the generated output file, pierced parcels are identified by their ShapeIDZ identifier (or _identifiers_ if a geocode pierces several polygons). 
 
+---
 
 ## Assigning UBIDs to shapes
 
@@ -186,17 +195,17 @@ To assign UBIDs to a data structure with pierced shapes, run the following comma
 ```
 project.generate_UBIDs()
 ```
-Recall that each row in the geocode data structure represents a single "expanded address" or, equivalently, a unique TempIDZ. Each such row may be associated with multiple geocodes if data was imported into the project from more than one geocoder. For each TempIDZ, the ``project.generate_UBIDs()`` method assigns a single UBID corresponding to the polygon pierced by the **highest confidence** geocode. A tie is resolved in favor of the geocoder that was imported earliest into the data structure. It is possible to change the criteria for selecting the optimal geocode to use when there are several candidates that pierce different parcels. To do this, see the code for the method ``pick_best_match(<func>)`` which can accept a function, _func_, that will prioritize geocodes according to a criterion other than highest confidenc (as this initiative evolves, we hope to move towards a set of best practices). A &mdash B
-
----
+Recall that each row in the geocode data structure represents a single "expanded address" or, equivalently, a unique TempIDZ. Each such row may be associated with multiple geocodes if data was imported into the project from more than one geocoder. For each TempIDZ, the ``project.generate_UBIDs()`` method assigns a single UBID corresponding to the polygon pierced by the **highest confidence** geocode. A tie is resolved in favor of the geocoder that was imported earliest into the data structure. It is possible to change the criteria for selecting the optimal geocode to use when there are several candidates that pierce different parcels. To do this, see the code for the method ``pick_best_match(<func>)`` which can accept a function, _func_, that will prioritize geocodes according to a criterion other than highest confidence (as this initiative evolves, we hope to move towards a set of best practices). 
 
 To generate an output for this procedure, either use the ``save_all`` method or the ``save_UBIDs`` method. The latter has the same syntax and output options as the ``save_geocoding`` command described earlier. For a given TempIDZ, the output will include the following fields:
 * **best_geocoder** --- The geocoder chosen (based on a criterion such as the highest confidence) 
 * **matching_ShapeIDZ** --- A list of the ShapeIDZs of a polygon pierced by the chosen geocode. Note that it is possible for more than one polygon to be pierced if the shape file data isn't sufficiently pre-processed to remove near-duplicate shapes (or, more rarely, if the parcel record data contain distinct but overlapping polygons).
 * **single_ShapeIDZ** --- The ShapeIDZ of one of the pierced polygons listed in 'matching_ShapeIDZ'.
-* **ShapeID, ShapeIDZ, UBID** --- Polygon shape identifiers and the UBID for any polygon that is related to 'single_ShapeIDZ' (because they share the same 'Shape_ID'). As mentioned earlier, this can happen when polygons are linked through some relationship (like common ownership). 
+* **ShapeID, ShapeIDZ, UBID** --- Polygon shape identifiers and the UBID for any polygon that is related to 'single_ShapeIDZ' (because they share the same 'Shape_ID'). This includes the polygon corresponding to 'single_ShapeIDZ' (naturally, as it is "related" to itself). As mentioned earlier, it may be desirable to allow multiple polygons to share the same 'Shape_ID' when they are linked through some relationship (like common ownership). 
 
-![image](https://user-images.githubusercontent.com/69352948/115027297-885a5500-9e91-11eb-94e6-b412899fb275.png)
+The image below depicts sample output with six distinct geocodes matched to a list with six shapes (WKT strings).  
+![image](https://user-images.githubusercontent.com/69352948/116015514-828a0f80-a607-11eb-9d64-a7c4332f0dad.png)
+The six shapes contain eight polygons (two of which, with ShapeIDs 6 & 7, are essentially identical). Only four of the five geocodes pierced a polygon among the shapes. The first geocode (TempID=10 and TempIDZ=0) pierced one of the three polygons contained in the shape with ShapeID=0. The output contains the UBIDs for **all** three of the polygons even though only one of them was pierced. This is to support a richer approach to tracing relationships across data sources.
 
 
 ### Assigning UBIDs to a list of polygons 
