@@ -43,11 +43,11 @@ class AddrParser:
         address = address.replace("'", "")
         address = re.sub('\\.', '', address)
         if address == '':
-            self.flags.append(AddrParser.Token('Err_00', typ='flag'))
+            self.flags.append(AddrParser.Token('AddrErr_00', typ='flag'))
             return
         if '(' in address:
             address = re.sub('\\(.+\\)', '', address)
-            self.flags.append(AddrParser.Token('Err_02', typ='flag'))
+            self.flags.append(AddrParser.Token('AddrErr_02', typ='flag'))
         address = address.lower()
         pieces = re.split('( and |&|#|,|;|//|/| |-)', address)
         pieces = [i.strip() for i in pieces if i]
@@ -125,7 +125,7 @@ class AddrParser:
 
         for piece in pieces:
             if piece.typ != 'del':
-                self.flags.append(AddrParser.Token('Err_06', typ='flag'))
+                self.flags.append(AddrParser.Token('AddrErr_06', typ='flag'))
 
     class Token:
         def __init__(self, strng, typ='other'):
@@ -168,18 +168,18 @@ class AddrParser:
         def __repr__(self):
             return f"'{self.strng}':'{self.typ}'"
 
-    Error_Codes = {'Err_00':'No Address Record',
-                   'Err_02':'No Numeric Found',
-                   'Err_03':'Apartment token without valid token following',
-                   'Err_04':'Possible bad range order',
-                   'Err_05':'Badly formed address',
-                   'Err_06':'Extra token after parsing',
-                   'Inf_01':'Contains Range Delimiter',
-                   'Inf_02':'Long Number',
-                   'Inf_03':'Ambiguous Direction, Unit',
-                   'Inf_04':'Has numbers divided by slash',
-                   'Inf_05':'Parenthesis in address',
-                   'Inf_10':'Queens address'
+    Error_Codes = {'AddrErr_00':'No Address Record',
+                   'AddrErr_02':'No Numeric Found',
+                   'AddrErr_03':'Apartment token without valid token following',
+                   'AddrErr_04':'Possible bad range order',
+                   'AddrErr_05':'Badly formed address',
+                   'AddrErr_06':'Extra token after parsing',
+                   'AddrInf_01':'Contains Range Delimiter',
+                   'AddrInf_02':'Long Number',
+                   'AddrInf_03':'Ambiguous Direction, Unit',
+                   'AddrInf_04':'Has numbers divided by slash',
+                   'AddrInf_05':'Parenthesis in address',
+                   'AddrInf_10':'Queens address'
                    }
 
     @staticmethod
@@ -214,11 +214,11 @@ class AddrParser:
                     has_num_slash = True
 
         if not has_num:
-            pieces.append(AddrParser.Token('Err_01', typ='flag'))
+            pieces.append(AddrParser.Token('AddrErr_01', typ='flag'))
         if possible_range:
-            pieces.append(AddrParser.Token('Inf_01', typ='flag'))
+            pieces.append(AddrParser.Token('AddrInf_01', typ='flag'))
         if has_num_slash:
-            pieces.append(AddrParser.Token('Inf_04', typ='flag'))
+            pieces.append(AddrParser.Token('AddrInf_04', typ='flag'))
 
         return pieces
     
@@ -241,9 +241,9 @@ class AddrParser:
 
         '''
         if self.postal in self.queens_zips:
-            pieces.append(AddrParser.Token('Inf_10', typ='flag'))
+            pieces.append(AddrParser.Token('AddrInf_10', typ='flag'))
         elif self.city == 'queens':
-            pieces.append(AddrParser.Token('Inf_10', typ='flag'))
+            pieces.append(AddrParser.Token('AddrInf_10', typ='flag'))
             
         return pieces
         
@@ -310,7 +310,7 @@ class AddrParser:
         for piece in pieces:
             if piece.typ == 'num':
                 if len(piece.strng) > 5:
-                    pieces.append(AddrParser.Token("Inf_02", typ='flag'))
+                    pieces.append(AddrParser.Token("AddrInf_02", typ='flag'))
         return pieces
 
     @staticmethod
@@ -327,7 +327,7 @@ class AddrParser:
                     piece.strng = piece.strng[:-1]
                     piece.typ = 'num'
                     pieces.insert(i, temp_piece)
-                    temp_pieces.append(AddrParser.Token("Inf_03", typ='flag'))
+                    temp_pieces.append(AddrParser.Token("AddrInf_03", typ='flag'))
                 # If it is a combined address and direction
                 elif re.match("^\\d+(?:nw|ne|sw|se)$", piece.strng):
                     temp_piece = AddrParser.Token(piece.strng[-2:], typ="char")
@@ -372,7 +372,7 @@ class AddrParser:
                     pieces[0] = AddrParser.Token(f'{pieces[0].strng}{space}{pieces[1].strng}', typ='pchar')
                     del pieces[1]
                 else:
-                    error_pieces.append(AddrParser.Token('Err_03', typ='flag'))
+                    error_pieces.append(AddrParser.Token('AddrErr_03', typ='flag'))
                     del pieces[0]
             elif pieces[0].typ == 'pchar':
                 if (pieces[1].typ in ['char', 'num', 'multnum', 'range', 'alnum']):
@@ -535,7 +535,7 @@ class AddrParser:
                     piece2 = piece1[:len(piece1)-len(piece2)] + piece2
                     piece.strng = piece1 + "-" + piece2
                 if piece2 < piece1:
-                    temp_pieces.append(AddrParser.Token('Err_04', typ='flag'))
+                    temp_pieces.append(AddrParser.Token('AddrErr_04', typ='flag'))
 
         return temp_pieces
 
@@ -577,7 +577,7 @@ class AddrParser:
         for piece in pieces:
             temp_pieces.append(piece)
         if error:
-            temp_pieces.append(AddrParser.Token('Err_05', typ='flag'))
+            temp_pieces.append(AddrParser.Token('AddrErr_05', typ='flag'))
         return temp_pieces
 
     @staticmethod

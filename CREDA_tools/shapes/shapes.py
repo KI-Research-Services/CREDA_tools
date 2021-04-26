@@ -46,7 +46,7 @@ def get_UBID(polygon):
 
 class ShapesList():
     
-    flags = pd.DataFrame(columns = ['Shape Flag','ShapeID']).set_index('ShapeID')
+    flags = pd.DataFrame(columns = ['Shape_Flag','ShapeID']).set_index('ShapeID')
     
     def __init__(self, file):
         shape_frame = pd.read_csv(file)
@@ -93,7 +93,7 @@ class ShapesList():
         if len(flags) > 0:
             self.flags = pd.DataFrame.from_dict(flags).set_index('ShapeID')
             self.flags = pd.merge(self.flags, self.Error_Codes, how='left', left_on='flag', right_index=True)
-            self.flags['Shape Flag'] = self.flags.flag + ": " + self.flags.description
+            self.flags['Shape_Flag'] = self.flags.flag + ": " + self.flags.description
             self.flags.drop(columns=['flag','description'], inplace=True)
         
         #self.flags['flag2'] = self.flags['flag'].str + " " + self.Error_Codes[self.flags.flag]

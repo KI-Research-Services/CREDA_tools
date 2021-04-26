@@ -129,22 +129,24 @@ def create_shape_pickle(infile: str, outfile:str) ->None:
 
 class CREDA_Project:
 
-    geocoder_results = pd.DataFrame()
-    piercing_results = pd.DataFrame()
-    best_matches = pd.DataFrame()
-    parsed_addresses = pd.DataFrame()
-    TempID_errors = pd.DataFrame()
-    TempIDZ_errors = pd.DataFrame()
-    shapes = pd.DataFrame()
-    UBIDs = pd.DataFrame()
-    past_clean = True
-
-    df_list = dict.fromkeys(['orig_addresses','parsed_addresses',
-                             'geocoder_results','piercing_results','best_matches',
-                             'UBIDs','TempID_errors','TempIDZ_errors','data_fields'],
-                            pd.DataFrame())
+    
 
     def __init__(self, entry, filename: str, geocoder='base'):
+        
+        self.geocoder_results = pd.DataFrame()
+        self.piercing_results = pd.DataFrame()
+        self.best_matches = pd.DataFrame()
+        self.parsed_addresses = pd.DataFrame()
+        self.TempID_errors = pd.DataFrame()
+        self.TempIDZ_errors = pd.DataFrame()
+        self.shapes = pd.DataFrame()
+        self.UBIDs = pd.DataFrame()
+        self.past_clean = True
+        self.df_list = dict.fromkeys(['orig_addresses','parsed_addresses',
+                                 'geocoder_results','piercing_results','best_matches',
+                                'UBIDs','TempID_errors','TempIDZ_errors','data_fields'],
+                                pd.DataFrame())
+        
         logger.info('\nInitializing run')
         pd.set_option('max_columns', 10)
         infile_path = Path(filename)
