@@ -107,18 +107,18 @@ def jaccard_combine(file_1, file_2, threshold, outfile):
 
     for _, row_1 in df_1.iterrows():
         ubid_1 = bc.decode(row_1['UBID'])
-        for IDZ_2, row_2 in df_2.iterrows():
+        for _, row_2 in df_2.iterrows():
             ubid_2 = bc.decode(row_2['UBID'])
             score = ubid_1.jaccard(ubid_2)
             if score:
                 if score > threshold:
                     df1_rows.append(row_1)
-                    df1_matches.append(IDZ_2)
+                    df1_matches.append(row_2['TempIDZ'])
     results = pd.DataFrame(df1_rows)
     results['MatchIDZ'] = df1_matches
-    results.index.rename('TempIDZ', inplace=True)
+    # results.index.rename('TempIDZ', inplace=True)
 
-    results = pd.merge(results, df_2, how='left', left_on='MatchIDZ', right_index=True)
+    results = pd.merge(results, df_2, how='left', left_on='MatchIDZ', right_on='TempIDZ')
 
     results.to_csv(outfile)
 
@@ -392,8 +392,8 @@ class CREDA_Project:
         self.shapes.shape_df.to_csv(filename)
 
     def save_piercing(self, filename: str, data_fields = False, address_fields = False):
-        if 'piercing_results' not in self.df_list.keys():
-            logger.warning('No piercing yet to save.')
+        if self.piercing_results.empty:
+            logger.error('No piercing results yet to save')
             return
         field_list = ['piercing_results']
         if data_fields:
@@ -409,6 +409,9 @@ class CREDA_Project:
         self.save_all(filename, field_list)
 
     def pick_best_match(self, func=None):
+        if self.piercing_results.empty:
+            logger.error('No piercing results yet to choose a best match')
+            return
         if func is None:
             func = simple_max
         best_match_df = pd.merge(self.geocoder_results, self.piercing_results, how="inner", left_index=True, right_index=True)
