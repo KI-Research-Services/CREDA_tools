@@ -120,7 +120,7 @@ def jaccard_combine(file_1, file_2, threshold, outfile):
 
     results = pd.merge(results, df_2, how='left', left_on='MatchIDZ', right_on='TempIDZ')
 
-    results.to_csv(outfile)
+    results.to_csv(outfile, index=False)
 
 def create_shape_pickle(infile: str, outfile:str) ->None:
     shapefile = SHP.ShapesList(infile)
