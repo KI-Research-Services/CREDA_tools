@@ -84,7 +84,7 @@ def simple_max(row, geocoders):
     best_geocoder = ""
     best_geocoder_score = 0
     for geocoder in geocoders:
-        if row[f'{geocoder}_status'] in ['Pierced', 'Pierced_Multiple']:
+        if row[f'{geocoder}_status'] in ['Pierced', 'Pierced_Multiple', 'Nearest_Neighbor']:
             if row[f'{geocoder}_confidence'] > best_geocoder_score:
                 best_geocoder = geocoder
                 best_geocoder_score = row[f'{geocoder}_confidence']

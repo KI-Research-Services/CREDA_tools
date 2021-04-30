@@ -124,17 +124,18 @@ class ShapesList():
                 else: #otherwise add it to the bounded list
                     if ShapeIDZ not in bounded_xy:
                         bounded_xy.append(ShapeIDZ)
-            if (len(pierced) == 0) and (filtered_shapes.shape[0]>0):
-                nearest = nearest_neighbor(point, filtered_shapes)
-                pierced.append(nearest)
-                bounded_xy.remove(nearest)
             pierced_count = len(pierced)
                 
             #Model results
             if pierced_count > 0:
                 status = "Pierced" if (pierced_count==1) else "Pierced_Multiple"
+            elif filtered_shapes.shape[0]>0:
+                nearest = nearest_neighbor(point, filtered_shapes)
+                pierced.append(nearest)
+                status="Nearest_Neighbor"
             else:
                 status = "Not Found"
+
             results.append({'TempIDZ':idx, f'{validator}_status':status,
                                 f'{validator}_pierced_ShapeIDZs':pierced})
             
