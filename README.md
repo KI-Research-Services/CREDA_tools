@@ -260,4 +260,4 @@ See also the list of (PLACEHOLDER) [contributors](https://github.com/your/projec
 
 ## License
 
-This project is licensed under the [MIT License](https://choosealicense.com/licenses/mit/) - see the [LICENSE.md](LICENSE.md) file for details
+This project is licensed under the [MIT License](https://choosealicense.com/licenses/mit/) - see the [license.md](license.md) file for details
