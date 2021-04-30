@@ -14,10 +14,8 @@ class AddressValidator(): # pylint: disable=too-few-public-methods
         '''Generic base method for validator matches'''
         return self.address_df
 
-import CREDA_tools.geocoding.arcgis as arcgis
 import CREDA_tools.geocoding.census as census
 import CREDA_tools.geocoding.generic as generic
-import CREDA_tools.geocoding.lightbox as lightbox
 
 class ValidatorFactory():
     '''Basic Factory class for validators'''
@@ -35,13 +33,5 @@ class ValidatorFactory():
     @staticmethod
     def create_external_validator(validator_type, geocode_file):
         '''Instantiates and returns the requested validator, based on input'''
-        # TODO add census back in
-        # Add GAPI back in
-        if validator_type == 'ArcGIS':
-            print("Running ArcGIS")
-            return arcgis.ArcGISValidator(geocode_file)
-        if validator_type == 'Lightbox':
-            return lightbox.LightBoxValidator(geocode_file)
-
-        # If validator type isn't defined
+        # Clean up post removing ArcGIS, GAPI, and Lightbox
         return generic.GenericValidator(geocode_file, validator_type)
