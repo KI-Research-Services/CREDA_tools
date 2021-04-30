@@ -245,7 +245,7 @@ where <in_file1> and <in_file2> are CSV input files, each containing a 'UBID' fi
 
 ## Contributing
 
-We welcome help in furthering the CREDA Initiative. To contribute in code development, please read (THIS IS ONLY A PLACEHOLDER) [CONTRIBUTING.md](https://gist.github.com/PurpleBooth/b24679402957c63ec426) for details on our code of conduct, and the process for submitting pull requests to us. To collaborate with additional data and tools, please reach out to David_Fisher @ kenan-flagler.unc.edu.
+We welcome help in furthering the CREDA Initiative. To contribute in code development, please read [CONTRIBUTING.md](https://github.com/KI-Research-Services/CREDA_tools/blob/master/contributing.md) for details on our code of conduct, and the process for submitting pull requests to us. To collaborate with additional data and tools, please reach out to David_Fisher @ kenan-flagler.unc.edu.
 
 ## Authors and acknowledgements
 
