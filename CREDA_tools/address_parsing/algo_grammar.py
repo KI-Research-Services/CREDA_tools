@@ -1,4 +1,3 @@
-# -*- coding: utf-8 -*-
 """
 Created on Thu Jul  2 22:26:36 2020
 
@@ -169,7 +168,8 @@ class AddrParser:
             return f"'{self.strng}':'{self.typ}'"
 
     Error_Codes = {'AddrErr_00':'No Address Record',
-                   'AddrErr_02':'No Numeric Found',
+                   'AddrErr_01':'No Numeric Found',
+                   'AddrErr_02':'Parenthesis in Address',
                    'AddrErr_03':'Apartment token without valid token following',
                    'AddrErr_04':'Possible bad range order',
                    'AddrErr_05':'Badly formed address',
