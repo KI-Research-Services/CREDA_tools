@@ -22,4 +22,10 @@ UBID1 = testing.shape_to_UBID(shape1)
 UBID2 = testing.shape_to_UBID(shape2)
 
 print(testing.check_parent_shape(shape1, shape2, 0.7))
+
+
 print(testing.check_parent_UBID(UBID1, UBID2, 0.7))
+
+
+
+# return [area1,area2,intersection]
