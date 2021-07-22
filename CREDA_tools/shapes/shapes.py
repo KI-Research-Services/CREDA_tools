@@ -10,6 +10,7 @@ import pandas as pd
 from shapely.geometry import Point#, Polygon
 from shapely.geos import WKTReadingError #Needed for new error
 import shapely.wkt
+from tqdm import tqdm
 
 import buildingid.code as bc
 
@@ -108,7 +109,7 @@ class ShapesList():
         subset_df = complete_df[[f'{validator}_long',f'{validator}_lat']]
         subset_df.columns = ['long','lat']
         count = 0
-        for idx, item in subset_df.iterrows():
+        for idx, item in tqdm(subset_df.iterrows(), total=subset_df.shape[0]):
             point = Point(item.long, item.lat)
             bounded_xy = []
             pierced = []
