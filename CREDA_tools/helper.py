@@ -494,7 +494,8 @@ class CREDA_Project:
             #Merge with shape_df to get associate shapes
             final_df = pd.merge(final_df, self.UBIDs['ShapeID'], how = 'left', left_on='single_ShapeIDZ', right_index=True)
             final_df = pd.merge(final_df, self.UBIDs.reset_index(), how = 'left', left_on='ShapeID', right_on='ShapeID')
-            final_df = pd.merge(final_df, self.shapes.flags.reset_index(), how = 'left', left_on='ShapeID', right_on='ShapeID')
+            if self.shapes.flags.shape[0]>0:
+                final_df = pd.merge(final_df, self.shapes.flags.reset_index(), how = 'left', left_on='ShapeID', right_on='ShapeID')
             final_df.loc[final_df.astype(str).drop_duplicates().index].to_csv(outfile, index=False)
         else:
             final_df = temp
